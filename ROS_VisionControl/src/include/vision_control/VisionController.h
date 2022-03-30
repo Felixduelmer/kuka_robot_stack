@@ -209,6 +209,11 @@ public slots:
   //JZL
   void onClickedpbtnInitROS();
 
+  //Felix
+  void onClickedpbtnAddPoint();
+  void onClickedpbtnExecuteTrajectory();
+  void onClickedpbtnDeletePoints();
+
   //zcy
   void onClickedpbtnSavePose();
   void onClickedpbtnRoutePlanning();

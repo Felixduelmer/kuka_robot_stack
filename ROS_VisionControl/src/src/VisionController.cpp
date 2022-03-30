@@ -111,6 +111,13 @@ void PluginController::init() {
 
   connect(ui_->pbtnInitROS, &QPushButton::clicked, this, &PluginController::onClickedpbtnInitROS);
 
+  // Test cases ->
+
+  connect(ui_->pbtnAddPoint, &QPushButton::clicked, this, &PluginController::onClickedpbtnAddPoint);
+  connect(ui_->pbtnExecuteTrajectory, &QPushButton::clicked, this, &PluginController::onClickedpbtnExecuteTrajectory);
+  connect(ui_->pbtnDeletePoints, &QPushButton::clicked, this, &PluginController::onClickedpbtnDeletePoints);
+
+
   //zcy
   connect(ui_->pbtnSavePose, &QPushButton::clicked, this, &PluginController::onClickedpbtnSavePose);
   connect(ui_->pbtnRoutePlanning, &QPushButton::clicked, this, &PluginController::onClickedpbtnRoutePlanning);
@@ -168,6 +175,19 @@ void PluginController::onReadPosesClick() {                       //
 void PluginController::onClickedpbtnInitROS() {
     algorithm_->onInitROS();
 
+}
+
+void PluginController::onClickedpbtnAddPoint(){
+     if (algorithm_->isRobotConnected()) {algorithm_->addPointConfiguration(algorithm_->getCurrentRobotPose());}
+}
+
+void PluginController::onClickedpbtnExecuteTrajectory(){
+         if (algorithm_->isRobotConnected()) {algorithm_->executeTrajectory();};
+}
+
+
+void PluginController::onClickedpbtnDeletePoints(){
+        algorithm_->deletePointConfigurations();
 }
 
 

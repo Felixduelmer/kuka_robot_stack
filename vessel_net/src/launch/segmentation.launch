@@ -1,0 +1,19 @@
+<launch>
+<!--Common arguments-->
+<arg name="path_for_config" default="/home/robotics-verse/projects/felix/vessel-tracking/image_seg_network/configs/config_vesnet_inference.json"/>
+
+<!-- STEP 1: START IMAGE PUBLISHER -->
+<node pkg="vessel_net" type="image_publisher.py" name="ImagePublisher" output="screen"/>
+
+<!-- STEP 2: START PRE PROCESSING PIPELINE -->
+<node pkg="vessel_net" type="pre_processing.py" name="PreProcessing" output="screen"/>
+
+<!-- STEP 2: START IMAGE SEGMENTAION -->
+<!-- <node pkg="vessel_net" type="segmentation.py" name="SegNode" output="screen"> 
+    <param name="path_for_config" type="string" value="$(arg path_for_config)"/>
+</node> -->
+
+<!-- STEP 2: SEGMENTAION RESULT VISUALIZATION
+<node pkg="vessel_net" type="image_subscriber.py" name="ImageSubscriber" output="screen"/> -->
+
+</launch>

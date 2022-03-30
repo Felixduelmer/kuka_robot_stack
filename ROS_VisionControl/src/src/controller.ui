@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>600</width>
-    <height>727</height>
+    <height>812</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,7 +17,7 @@
    <item row="0" column="0">
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>3</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="tab_1">
       <property name="layoutDirection">
@@ -27,6 +27,143 @@
        <string>TestFunction</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout_2">
+       <item row="0" column="0">
+        <layout class="QGridLayout" name="gridLayout_5">
+         <item row="1" column="3">
+          <widget class="QLineEdit" name="ledtForceZ"/>
+         </item>
+         <item row="0" column="1">
+          <widget class="QLabel" name="lblForceX">
+           <property name="text">
+            <string>FX</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="3">
+          <widget class="QLabel" name="lblForceZ">
+           <property name="text">
+            <string>FZ</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="2">
+          <widget class="QLabel" name="lblForceY">
+           <property name="text">
+            <string>FY</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="2">
+          <widget class="QLabel" name="lblToqueY">
+           <property name="text">
+            <string>TY</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QLineEdit" name="ledtForceX"/>
+         </item>
+         <item row="2" column="3">
+          <widget class="QLabel" name="lblToqueZ">
+           <property name="text">
+            <string>TZ</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <widget class="QLabel" name="lblToqueX">
+           <property name="text">
+            <string>TX</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="lblForce">
+           <property name="text">
+            <string>Force(N)</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="2">
+          <widget class="QLineEdit" name="ledtForceY"/>
+         </item>
+         <item row="3" column="0">
+          <widget class="QLabel" name="lblToque">
+           <property name="text">
+            <string>Toque(XX)</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="1">
+          <widget class="QLineEdit" name="ledtToqueX"/>
+         </item>
+         <item row="3" column="2">
+          <widget class="QLineEdit" name="ledtToqueY"/>
+         </item>
+         <item row="3" column="3">
+          <widget class="QLineEdit" name="ledtToqueZ"/>
+         </item>
+        </layout>
+       </item>
+       <item row="7" column="0">
+        <widget class="QPushButton" name="pbtnExecuteTrajectory">
+         <property name="text">
+          <string>Execute Trajectory</string>
+         </property>
+        </widget>
+       </item>
+       <item row="5" column="0">
+        <widget class="QLabel" name="label_2">
+         <property name="text">
+          <string>Select multiple positions and store them to finally move along them</string>
+         </property>
+        </widget>
+       </item>
+       <item row="17" column="0">
+        <widget class="QPushButton" name="pbtnVisualizeConfimap">
+         <property name="text">
+          <string>Visualize Confimap</string>
+         </property>
+        </widget>
+       </item>
+       <item row="11" column="0">
+        <widget class="QPushButton" name="pbtnStartUSStream">
+         <property name="text">
+          <string>Start US Stream</string>
+         </property>
+        </widget>
+       </item>
+       <item row="22" column="0">
+        <widget class="QPushButton" name="pbtn_test_rotation">
+         <property name="text">
+          <string>Test Rotation</string>
+         </property>
+        </widget>
+       </item>
        <item row="3" column="0">
         <layout class="QHBoxLayout" name="horizontalLayout_2">
          <item>
@@ -45,10 +182,77 @@
          </item>
         </layout>
        </item>
-       <item row="18" column="0">
-        <widget class="QPushButton" name="pbtn_test_rotation">
+       <item row="13" column="0">
+        <layout class="QHBoxLayout" name="horizontalLayout_8">
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QLineEdit" name="ledt_full_path_to_imf">
+           <property name="placeholderText">
+            <string>Full path to an .imf file</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="pbtnLoadSweep_imf">
+           <property name="text">
+            <string>Load imf sweep</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item row="6" column="0">
+        <widget class="QPushButton" name="pbtnAddPoint">
          <property name="text">
-          <string>Test Rotation</string>
+          <string>Add Point</string>
+         </property>
+        </widget>
+       </item>
+       <item row="15" column="0">
+        <layout class="QHBoxLayout" name="horizontalLayout_13">
+         <item>
+          <widget class="QLineEdit" name="ledtSliceIndex">
+           <property name="placeholderText">
+            <string>Index in Sweep</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="pbtnComputerConfiMap">
+           <property name="text">
+            <string>Compute Confi Map</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item row="20" column="0">
+        <layout class="QHBoxLayout" name="horizontalLayout_4">
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QLineEdit" name="ledt_trajectory_file_to_write">
+           <property name="text">
+            <string>/home/chenyu/MA/position.txt</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="pbtnWriteCurrRobotPose">
+           <property name="text">
+            <string>Write Current Pose to a File</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item row="10" column="0">
+        <widget class="QPushButton" name="pbtnStopUSStream">
+         <property name="text">
+          <string>Stop US Stream</string>
          </property>
         </widget>
        </item>
@@ -187,45 +391,6 @@
          </item>
         </layout>
        </item>
-       <item row="11" column="0">
-        <layout class="QHBoxLayout" name="horizontalLayout_13">
-         <item>
-          <widget class="QLineEdit" name="ledtSliceIndex">
-           <property name="placeholderText">
-            <string>Index in Sweep</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="pbtnComputerConfiMap">
-           <property name="text">
-            <string>Compute Confi Map</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
-       <item row="9" column="0">
-        <layout class="QHBoxLayout" name="horizontalLayout_8">
-         <property name="topMargin">
-          <number>0</number>
-         </property>
-         <item>
-          <widget class="QLineEdit" name="ledt_full_path_to_imf">
-           <property name="placeholderText">
-            <string>Full path to an .imf file</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="pbtnLoadSweep_imf">
-           <property name="text">
-            <string>Load imf sweep</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
        <item row="4" column="0">
         <layout class="QVBoxLayout" name="verticalLayout_3">
          <item>
@@ -258,154 +423,17 @@
          </item>
         </layout>
        </item>
-       <item row="7" column="0">
-        <widget class="QPushButton" name="pbtnStartUSStream">
-         <property name="text">
-          <string>Start US Stream</string>
-         </property>
-        </widget>
-       </item>
-       <item row="16" column="0">
-        <layout class="QHBoxLayout" name="horizontalLayout_4">
-         <property name="topMargin">
-          <number>0</number>
-         </property>
-         <item>
-          <widget class="QLineEdit" name="ledt_trajectory_file_to_write">
-           <property name="text">
-            <string>/home/chenyu/MA/position.txt</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="pbtnWriteCurrRobotPose">
-           <property name="text">
-            <string>Write Current Pose to a File</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
-       <item row="13" column="0">
-        <widget class="QPushButton" name="pbtnVisualizeConfimap">
-         <property name="text">
-          <string>Visualize Confimap</string>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="0">
-        <layout class="QGridLayout" name="gridLayout_5">
-         <item row="1" column="3">
-          <widget class="QLineEdit" name="ledtForceZ"/>
-         </item>
-         <item row="0" column="1">
-          <widget class="QLabel" name="lblForceX">
-           <property name="text">
-            <string>FX</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignCenter</set>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="3">
-          <widget class="QLabel" name="lblForceZ">
-           <property name="text">
-            <string>FZ</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignCenter</set>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="2">
-          <widget class="QLabel" name="lblForceY">
-           <property name="text">
-            <string>FY</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignCenter</set>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="2">
-          <widget class="QLabel" name="lblToqueY">
-           <property name="text">
-            <string>TY</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignCenter</set>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="1">
-          <widget class="QLineEdit" name="ledtForceX"/>
-         </item>
-         <item row="2" column="3">
-          <widget class="QLabel" name="lblToqueZ">
-           <property name="text">
-            <string>TZ</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignCenter</set>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="1">
-          <widget class="QLabel" name="lblToqueX">
-           <property name="text">
-            <string>TX</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignCenter</set>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="0">
-          <widget class="QLabel" name="lblForce">
-           <property name="text">
-            <string>Force(N)</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignCenter</set>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="2">
-          <widget class="QLineEdit" name="ledtForceY"/>
-         </item>
-         <item row="3" column="0">
-          <widget class="QLabel" name="lblToque">
-           <property name="text">
-            <string>Toque(XX)</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignCenter</set>
-           </property>
-          </widget>
-         </item>
-         <item row="3" column="1">
-          <widget class="QLineEdit" name="ledtToqueX"/>
-         </item>
-         <item row="3" column="2">
-          <widget class="QLineEdit" name="ledtToqueY"/>
-         </item>
-         <item row="3" column="3">
-          <widget class="QLineEdit" name="ledtToqueZ"/>
-         </item>
-        </layout>
-       </item>
-       <item row="6" column="0">
-        <widget class="QPushButton" name="pbtnStopUSStream">
-         <property name="text">
-          <string>Stop US Stream</string>
-         </property>
-        </widget>
-       </item>
-       <item row="5" column="0">
+       <item row="9" column="0">
         <widget class="QPushButton" name="pbtnInitROS">
          <property name="text">
           <string>Initialize ROS</string>
+         </property>
+        </widget>
+       </item>
+       <item row="8" column="0">
+        <widget class="QPushButton" name="pbtnDeletePoints">
+         <property name="text">
+          <string>Delete Points</string>
          </property>
         </widget>
        </item>

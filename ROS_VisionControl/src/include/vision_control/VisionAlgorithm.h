@@ -392,6 +392,14 @@ public:
   void onCoordinateTransformation();
 
 
+  //Felix
+  void addPointConfiguration(const geometry_msgs::PoseStamped& pose) {   manual_traj_points_.push_back  (pose); }
+  void deletePointConfigurations() {manual_traj_points_.clear();}
+  void executeTrajectory();
+  void onMoveToNewPoint();
+  void FinishedMoveToNewPointCallback();
+
+
 
 
 signals:
@@ -531,6 +539,11 @@ private:
   geometry_msgs::PoseStamped out_pose_{};
   std::mutex pose_mutex_{};
   std::mutex wrench_mutex_{};
+
+  //Felix
+  std::vector<geometry_msgs::PoseStamped> manual_traj_points_{};
+  int m_nTrajPoints{0};
+  int n_poses{0};
 
 
   std::string something_{"something"};

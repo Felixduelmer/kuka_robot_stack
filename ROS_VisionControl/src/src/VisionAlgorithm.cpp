@@ -63,6 +63,46 @@ cv::Point PluginAlgorithm::find_closest_centroid(const std::vector<std::vector<c
   return result;
 }
 
+//execute a movement along defined points
+void PluginAlgorithm::executeTrajectory() {
+
+    LOG_INFO("Start to exexute Trajectory");
+    n_poses = manual_traj_points_.size();
+    LOG_INFO("Number of points to go to: " + std::to_string(n_poses));
+    FinishedMoveToNewPointCallback();
+
+}
+
+
+
+//Callback to continue trajectory
+void PluginAlgorithm::FinishedMoveToNewPointCallback() {
+
+    LOG_INFO("FinishedMoveToNewPointCallback");
+    if (m_nTrajPoints < n_poses && m_nTrajPoints >= 0) {
+
+      onMoveToNewPoint();
+      m_nTrajPoints++;
+    }
+    else {
+    if(m_nTrajPoints == n_poses) {
+    LOG_INFO("reached final point");
+    m_nTrajPoints = 0;
+    }
+
+}
+}
+
+//execute a movement along defined points
+void PluginAlgorithm::onMoveToNewPoint() {
+
+    LOG_INFO("onMoveToNewPoint");
+    LOG_INFO("Current destination point : " + std::to_string(m_nIteration));
+    executeCartesianCommand(manual_traj_points_[m_nTrajPoints].pose, true, std::bind(&PluginAlgorithm::FinishedMoveToNewPointCallback, this));
+
+}
+
+
 
 //initialize the ros related node.
 void PluginAlgorithm::onInitROS() {
@@ -82,11 +122,6 @@ void PluginAlgorithm::onInitROS() {
     this->m_unet_segmentation_pub = nh.advertise<sensor_msgs::Image>("/ultrasound_img", 1);
     this->m_ros_initialized = true;
     LOG_INFO(this->m_ros_initialized);
-}
-
-void PluginAlgorithm::onAddPoint() {
-
-
 }
 
 
