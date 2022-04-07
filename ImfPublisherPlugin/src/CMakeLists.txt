@@ -107,6 +107,29 @@ if (UNIX)
     endif()
 endif()
 
+# add_executable(demoEx src/main.cpp)
+# 
+# target_include_directories(demoEx PRIVATE
+#   include
+#   ${IMFUSION_SDK_INCLUDE}
+#   ${catkin_INCLUDE_DIRS}
+#   ${CMAKE_CURRENT_SOURCE_DIR}
+#   ${CMAKE_CURRENT_BINARY_DIR}
+#   ${Qt5Widgets_INCLUDE_DIRS}
+#   )
+# 
+# target_link_libraries (demoEx PRIVATE
+#         ${PROJECT_NAME}
+#         ImFusionLib
+#         ImFusionStream
+#         ImFusionUS
+#         ImFusionRobotics #JZL
+#         ImFusionROS  #JZL
+#         CephasonicsPlugin   #JZL
+#         ${catkin_LIBRARIES}
+#         Qt5::Widgets
+# )
+
 #JZL
 
 

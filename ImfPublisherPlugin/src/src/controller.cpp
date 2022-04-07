@@ -41,17 +41,15 @@ void PluginController::init() {
 }
 
 void PluginController::onStartClicked() {
-  ImageStream* usStream;
-  if (-2 == ui_->buttonGroup->checkedId()) {
-    auto cepha_stream = m_main->dataModel()->get("Ultrasound Stream");
-    usStream = static_cast<ImageStream*>(cepha_stream);
-  } else if (-3 == ui_->buttonGroup->checkedId()) {
-    auto cepha_stream = m_main->dataModel()->get("Cephasonics Ultrasound");
-    auto stream = static_cast<DataGroup *>(cepha_stream)->at(0);
-    usStream = static_cast<ImageStream*>(stream);
-  }
 
-  algorithm_->startStream(usStream);
+  algorithm_->startStream();
+
+
+//   ImageStream* usStream;
+//     auto us_stream = m_main->dataModel()->get("Ultrasound Stream");
+//     usStream = static_cast<ImageStream*>(us_stream);
+
+//   algorithm_->startStream(usStream);
 }
 
 void PluginController::onStopClicked() {
