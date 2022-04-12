@@ -6,7 +6,7 @@ namespace ImFusion {
 class AlgorithmFactory;
 class AlgorithmControllerFactory;
 
-namespace Live3DCompunding {
+namespace ROS_RoboticVessel {
 
 class Plugin : public ImFusionPlugin{
 public:
@@ -25,5 +25,5 @@ private:
   
 };
 
-}  // namespace Live3DCompunding
+}  // namespace ROS_RoboticVessel
 }  // namespace ImFusion

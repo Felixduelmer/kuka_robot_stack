@@ -1,7 +1,7 @@
 #include "robotic_vessel/sweeper.h"
 
 namespace ImFusion {
-namespace Live3DCompunding {
+namespace ROS_RoboticVessel {
 
 Sweeper::Sweeper(LiveTrackingStream* tracking_stream, ImageStream* ultrasound_stream, const std::string& sweep_name)
   : sweep_name_(sweep_name) {
@@ -84,8 +84,5 @@ bool Sweeper::hasData() {
   return (!partial_sweeps_.empty());
 }
 
-
-
-
-}  // namespace Live3DCompunding
+}  // namespace ROS_RoboticVessel
 }  // namespace ImFusion

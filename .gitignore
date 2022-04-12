@@ -1,2 +1,14 @@
 
 *.db
+
+cmake-build-debug/
+
+ImfPublisherPlugin/build-src-Desktop-Debug/
+
+Live3D-Compounding/build-src-Desktop-Debug/
+
+Live3D-Compounding/build-src-Desktop-Default/
+
+ROS_RoboticVessel/build/
+
+ROS_RoboticVessel/devel/

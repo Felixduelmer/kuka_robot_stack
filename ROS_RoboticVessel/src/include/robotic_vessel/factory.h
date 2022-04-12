@@ -4,7 +4,7 @@
 #include <ImFusion/Base/AlgorithmFactory.h>
 
 namespace ImFusion {
-namespace Live3DCompunding {
+namespace ROS_RoboticVessel {
 
 class Algorithm;
 
@@ -18,5 +18,5 @@ public:
   virtual AlgorithmController* create(ImFusion::Algorithm* a) const override;
 };
 
-}  // namespace Live3DCompunding
+}  // namespace ROS_RoboticVessel
 }  // namespace ImFusion

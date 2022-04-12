@@ -21,7 +21,7 @@
 
 
 namespace ImFusion {
-namespace Live3DCompunding {
+namespace ROS_RoboticVessel {
 
 class Sweeper {
 public:
@@ -77,5 +77,5 @@ private:
 };
 
 
-}  // namespace Live3DCompunding
+}  // namespace ROS_RoboticVessel
 }  // namespace ImFusion

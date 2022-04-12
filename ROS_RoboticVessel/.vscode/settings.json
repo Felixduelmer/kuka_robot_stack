@@ -14,6 +14,12 @@
         "istream": "cpp",
         "functional": "cpp",
         "tuple": "cpp",
-        "utility": "cpp"
-    }
+        "utility": "cpp",
+        "cmath": "cpp",
+        "new": "cpp",
+        "bitset": "cpp",
+        "initializer_list": "cpp",
+        "string_view": "cpp"
+    },
+    "cmake.sourceDirectory": "${workspaceFolder}/src"
 }

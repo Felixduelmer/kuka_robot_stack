@@ -3,14 +3,18 @@
 #include "robotic_vessel/controller.h"
 
 namespace ImFusion {
-namespace Live3DCompunding {
+    namespace ROS_RoboticVessel {
 
-PluginAlgorithmFactory::PluginAlgorithmFactory() { registerAlgorithm<PluginAlgorithm>("ROS;Live3DCompunding"); }
+        PluginAlgorithmFactory::PluginAlgorithmFactory() {
+            registerAlgorithm<PluginAlgorithm>("ROS;ROS_RoboticVessel");
+        }
 
-AlgorithmController* PluginControllerFactory::create(ImFusion::Algorithm* a) const {
-  if (PluginAlgorithm* algorithm = dynamic_cast<PluginAlgorithm*>(a)) { return new PluginController(algorithm); }
-  return nullptr;
-}
+        AlgorithmController *PluginControllerFactory::create(ImFusion::Algorithm *a) const {
+            if (PluginAlgorithm * algorithm = dynamic_cast<PluginAlgorithm *>(a)) {
+                return new PluginController(algorithm);
+            }
+            return nullptr;
+        }
 
-}  // namespace Live3DCompunding
+    }  // namespace ROS_RoboticVessel
 }  // namespace ImFusion

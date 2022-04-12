@@ -7,11 +7,11 @@ extern "C" __declspec(dllexport) ImFusion::ImFusionPlugin* createPlugin()
 extern "C" ImFusion::ImFusionPlugin* createPlugin()
 #endif
 {
-  return new ImFusion::Live3DCompunding::Plugin;
+  return new ImFusion::ROS_RoboticVessel::Plugin;
 }
 
 namespace ImFusion {
-namespace Live3DCompunding {
+namespace ROS_RoboticVessel {
 
 Plugin::Plugin() {
   algorithm_factory_ = std::make_unique<PluginAlgorithmFactory>();
@@ -23,5 +23,5 @@ const ImFusion::AlgorithmFactory* Plugin::getAlgorithmFactory() { return algorit
 const ImFusion::AlgorithmControllerFactory* Plugin::getAlgorithmControllerFactory() {
   return algorithm_controller_factory_.get();
 }
-}  // namespace Live3DCompunding
+}  // namespace ROS_RoboticVessel
 }  // namespace ImFusion
