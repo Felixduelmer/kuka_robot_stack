@@ -6,6 +6,7 @@
 #include <ImFusion/US/USSweepRecorderAlgorithm.h>
 #include <ImFusion/Base/DataList.h>
 #include <QtCore/QThread>
+#include <ImFusion/Stream/FakeTrackingStream.h>
 
 namespace ImFusion {
     namespace ROS_RoboticVessel {
@@ -18,6 +19,7 @@ namespace ImFusion {
             void startSweepRecording();
 
             void compoundAllSweeps();
+            void stop();
 
             std::string getDayAndTime();
         public slots:
@@ -27,7 +29,7 @@ namespace ImFusion {
         private:
             MainWindowBase *m_main{nullptr};
             QTimer *timer;
-            bool m_useDummyData = true;
+            bool m_useLiveData = true;
             bool m_exportSweeps = false;
             int numberOfPartialSweeps{0};
             DataList m_dataList;

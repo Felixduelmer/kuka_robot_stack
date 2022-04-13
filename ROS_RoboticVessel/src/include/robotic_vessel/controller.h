@@ -61,50 +61,55 @@
 // #include <unistd.h>
 // #include <functional>
 //#include "robotic_vessel/RobotControl.h"
-#include "robotic_vessel/SweepRecAndComp.h"
+#include "robotic_vessel/sweep_rec_and_comp.h"
 
 class Ui_Controller;
 
-namespace ImFusion
-{
-  namespace ROS_RoboticVessel
-  {
+namespace ImFusion {
+    namespace ROS_RoboticVessel {
 
-    class PluginAlgorithm;
+        class PluginAlgorithm;
 
-    class PluginController : public QWidget, public AlgorithmController
-    {
-      Q_OBJECT
-    public:
-      /// Constructor with the algorithm instance
-      PluginController(PluginAlgorithm *algorithm);
+        class PluginController : public QWidget, public AlgorithmController {
+        Q_OBJECT
+        public:
+            /// Constructor with the algorithm instance
+            PluginController(PluginAlgorithm *algorithm);
 
-      virtual ~PluginController() = default;
+            virtual ~PluginController() = default;
 
-      void init();
-      void addToMainDataModel(Data *data, const std::string &name);
+            void init();
 
-      USSweepRecorderAlgorithm *myMultiUSSweepRecorderAlgorithm;
+            void addToMainDataModel(Data *data, const std::string &name);
 
-      QTimer *timer;
-    signals:
-      void sweepFinished(bool partial);
-      void startRecording();
+            USSweepRecorderAlgorithm *myMultiUSSweepRecorderAlgorithm;
 
-      void start();
-      void pause();
-      void stop();
+            QTimer *timer;
+        signals:
 
-    public slots:
-      void onStartClicked();
-      void onStopClicked();
+            void sweepFinished(bool partial);
 
-    private:
-      std::shared_ptr<Ui_Controller> ui_{nullptr}; ///< The actual GUI
-      PluginAlgorithm *algorithm_{nullptr};        ///< The algorithm instance
+            void startRecording();
+
+            void start();
+
+            void pause();
+
+            void stop();
+
+        public slots:
+
+            void onStartClicked();
+
+            void onStopClicked();
+
+        private:
+            std::shared_ptr<Ui_Controller> ui_{nullptr}; ///< The actual GUI
+            PluginAlgorithm *algorithm_{nullptr};        ///< The algorithm instance
 //      RobotControl *m_robot_control{nullptr};
-        SweepRecAndComp *sweepRecAndComp;
-    };
+            SweepRecAndComp *sweepRecAndComp;
+            ImageStream *imageStream;
+        };
 
-  } // namespace ROS_RoboticVessel
+    } // namespace ROS_RoboticVessel
 } // namespace ImFusion

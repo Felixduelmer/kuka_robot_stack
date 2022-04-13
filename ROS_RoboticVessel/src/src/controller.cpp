@@ -19,9 +19,10 @@
 #define slots Q_SLOTS
 
 #include "ui_controller.h"
-#include "robotic_vessel/vesselNet.h"
+#include "robotic_vessel/vessel_segmentation_listener.h"
 #include <opencv2/opencv.hpp>
 
+const bool useDumyData = false;
 
 namespace ImFusion {
     namespace ROS_RoboticVessel {
@@ -40,28 +41,35 @@ namespace ImFusion {
             connect(ui_->pbtStop, &QPushButton::clicked, this, &PluginController::onStopClicked);
 
             sweepRecAndComp = new SweepRecAndComp(m_main);
-            cv::namedWindow("usImage");
-            cv::namedWindow("dopplerImage");
-            cv::namedWindow("segImage");
+//            cv::namedWindow("usImage");
+//            cv::namedWindow("dopplerImage");
+//            cv::namedWindow("segImage");
         }
 
         void PluginController::onStartClicked() {
+            if (useDumyData) {
+                ImFusionFile file("/data1/volume1/data/felix_data/sweeps_imfusion/patient_2/Felix-02.imf");
+                file.open(0);
 
+                DataList dataList;
+                file.load(dataList);
 
+                SharedImageSet *sis = dataList.getImage(Data::UNKNOWN);
+                imageStream = new PlaybackStream(*sis);
+            } else {
+                imageStream = static_cast<ImageStream *>(m_main->dataModel()->get("Ultrasound Stream"));
+            }
+            auto pLiveSegmentationStream = new LiveSegmentationStream(imageStream);
+            m_main->dataModel()->add(pLiveSegmentationStream, "pLiveSegmentationStream");
+            imageStream->open();
+            imageStream->start();
+            sweepRecAndComp->startSweepRecording();
         }
 
         void PluginController::onStopClicked() {
-            ImFusionFile file("/data1/volume1/data/felix_data/sweeps_imfusion/patient_2/Felix-02.imf");
-            file.open(0);
-
-            DataList dataList;
-            file.load(dataList);
-
-            SharedImageSet* sis = dataList.getImage(Data::UNKNOWN);
-            auto imageStream = new PlaybackStream(*sis);
-            auto processor = new MyImageStreamLiveProcessingAlgorithm(imageStream);
-            imageStream->open();
-            imageStream->start();
+            imageStream->stop();
+            imageStream->close();
+            sweepRecAndComp->stop();
 
         }
 

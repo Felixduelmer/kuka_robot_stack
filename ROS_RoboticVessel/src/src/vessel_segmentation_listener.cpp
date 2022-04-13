@@ -1,4 +1,4 @@
-#include "robotic_vessel/vesselNet.h"
+#include "robotic_vessel/vessel_segmentation_listener.h"
 
 #include <ImFusion/Stream/ImageStream.h>
 #include <ImFusion/Base/MemImage.h>
@@ -7,7 +7,7 @@
 
 namespace ImFusion {
     namespace ROS_RoboticVessel {
-        VesselSegmentationProcessingStream::VesselSegmentationProcessingStream(ImageStream *imgStream) : m_inStream(
+        LiveSegmentationStream::LiveSegmentationStream(ImageStream *imgStream) : m_inStream(
                 imgStream) {
             m_inStream->addListener(this);
             try {
@@ -19,11 +19,16 @@ namespace ImFusion {
             }
         }
 
-        void VesselSegmentationProcessingStream::onStreamData(const StreamData &streamData) {
+        LiveSegmentationStream::LiveSegmentationStream() {
+
+        }
+
+        void LiveSegmentationStream::onStreamData(const StreamData &streamData) {
             std::chrono::steady_clock::time_point receivedImage = std::chrono::steady_clock::now();
             auto *imgData = dynamic_cast<const ImageStreamData *>(&streamData);
             std::unique_ptr<MemImage> image = imgData->images().front()->clone2();
             at::Tensor tensor = preProcessData(std::move(image));
+            std::cout << "max image value: " << torch::max(tensor) << std::endl;
             inputs.clear();
             tensor = tensor.toType(torch::kFloat);
             inputs.push_back(tensor.to(at::kCUDA));
@@ -49,11 +54,9 @@ namespace ImFusion {
             for (int i = 0; i < newState.size(); i++) {
                 state.push_back(newState.get(i).toTensor().detach());
             }
-//            for (auto &el : output->elements()[1].toList()){
-//
-//            }
-            cv::Mat mat = cv::Mat(cv::Size(320, 320), CV_8U, output_image_tensor.data_ptr<uchar>());
-            cv::imshow("segImage", mat);
+
+            cv::Mat cvOutputImage = cv::Mat(cv::Size(320, 320), CV_8U, output_image_tensor.data_ptr<uchar>());
+            cv::imshow("segImage", cvOutputImage);
             std::chrono::steady_clock::time_point receivedImageEnd = std::chrono::steady_clock::now();
             std::cout << "Model took = "
                       << std::chrono::duration_cast<std::chrono::milliseconds>(end_model - begin_model).count()
@@ -63,23 +66,21 @@ namespace ImFusion {
                       << "[µs]" << std::endl;
 
 
-
-
-
-
-//                // do some processing here
-//                MemImage* img =
-
-////                 prepare stream output
-//                ImageStreamData oisd(this);
-//                oisd.setTimestampArrival(imgData->timestampArrival());
-//                oisd.setTimestampDevice(imgData->timestampDevice());
-//                std::vector<MemImage*> streamImages = {img};
-//                oisd.setImages(streamImages);
-//                updateListenersData(oisd);
+//                 prepare stream output
+            int nWidth = cvOutputImage.cols;
+            int nHeight = cvOutputImage.rows;
+            MemImage *outImg = MemImage::create(Image::UBYTE, nWidth, nHeight, 1, 1);
+            memcpy(outImg->data(), cvOutputImage.data, cvOutputImage.rows * cvOutputImage.cols * sizeof(uchar));
+            outImg->setSpacing();
+            ImageStreamData oisd(this);
+            oisd.setTimestampArrival(imgData->timestampArrival());
+            oisd.setTimestampDevice(imgData->timestampDevice());
+            std::vector<MemImage *> streamImages = {outImg};
+            oisd.setImages(streamImages);
+            updateListenersData(oisd);
         }
 
-        at::Tensor VesselSegmentationProcessingStream::preProcessData(std::unique_ptr<MemImage> memImage) {
+        at::Tensor LiveSegmentationStream::preProcessData(std::unique_ptr<MemImage> memImage) {
             //copy to cv mat image
             cv::Mat cv_imgIn(memImage->height(), memImage->width(), CV_8UC3);  //uchar
             memcpy(cv_imgIn.data, memImage->data(), memImage->byteSize());
@@ -111,7 +112,7 @@ namespace ImFusion {
 
         }
 
-        at::Tensor VesselSegmentationProcessingStream::toTensor(const cv::Mat &img_us, const cv::Mat &img_doppler) {
+        at::Tensor LiveSegmentationStream::toTensor(const cv::Mat &img_us, const cv::Mat &img_doppler) {
             at::Tensor tensor_us = torch::from_blob(img_us.data, {1, 1, img_us.rows, img_us.cols}, torch::kU8);
             at::Tensor tensor_doppler = torch::from_blob(img_doppler.data, {1, 1, img_doppler.rows, img_doppler.cols},
                                                          torch::kU8);
@@ -124,12 +125,37 @@ namespace ImFusion {
             return tensor;
         }
 
-        void VesselSegmentationProcessingStream::initState() {
+        void LiveSegmentationStream::initState() {
             state.push_back(torch::zeros({1, 8, 320, 320}).to(at::kCUDA));
             state.push_back(torch::zeros({1, 16, 160, 160}).to(at::kCUDA));
             state.push_back(torch::zeros({1, 32, 80, 80}).to(at::kCUDA));
             state.push_back(torch::zeros({1, 64, 40, 40}).to(at::kCUDA));
         }
+
+        bool LiveSegmentationStream::open() {
+            return true;
+        }
+
+        bool LiveSegmentationStream::close() {
+            return true;
+        }
+
+        bool LiveSegmentationStream::start() {
+            return true;
+        }
+
+        bool LiveSegmentationStream::stop() {
+            return true;
+        }
+
+        bool LiveSegmentationStream::isRunning() const {
+            return true;
+        }
+
+        std::string LiveSegmentationStream::uuid() {
+            return std::__cxx11::string("dummy id");
+        }
+
 
     }
 }

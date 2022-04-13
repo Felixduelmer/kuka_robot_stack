@@ -1,4 +1,4 @@
-#include "robotic_vessel/SweepRecAndComp.h"
+#include "robotic_vessel/sweep_rec_and_comp.h"
 #include <ImFusion/Base/Log.h>
 #include <ImFusion/GL/GlVolumeCompounding.h>
 #include <ImFusion/US/GlSweepCompounding.h>
@@ -26,54 +26,49 @@ namespace ImFusion {
         }
 
         void SweepRecAndComp::startSweepRecording() {
+            LiveTrackingStream *robStream;
+            ImageStream *usStream;
 
-            if (m_useDummyData) {
-                ImFusionFile file("/home/robotics-verse/Desktop/testSweep.imf");
-                file.open(0);
-
-                DataList dataList;
-                file.load(dataList);
-                m_dataList = dataList;
-            } else {
-                LiveTrackingStream *robStream = static_cast<LiveTrackingStream *>(m_main->dataModel()->get(
+            if (m_useLiveData) {
+                robStream = static_cast<LiveTrackingStream *>(m_main->dataModel()->get(
                         "Robot Tracking"));
-                ImageStream *usStream = static_cast<ImageStream *>(m_main->dataModel()->get("Ultrasound Stream"));
-                std::vector<Stream *> vec;
-                vec.push_back((usStream));
-                vec.push_back((robStream));
-
-                myMultiUSSweepRecorderAlgorithm = new USSweepRecorderAlgorithm(vec);
-                myMultiUSSweepRecorderAlgorithm->start();
+                usStream = static_cast<ImageStream *>(m_main->dataModel()->get("pLiveSegmentationStream"));
+            } else {
+                robStream = new FakeTrackingStream();
+                usStream = static_cast<ImageStream *>(m_main->dataModel()->get("pLiveSegmentationStream"));
+                robStream->open();
+                robStream->start();
             }
+            std::vector<Stream *> vec;
+            vec.push_back((usStream));
+            vec.push_back((robStream));
 
-            onUpdateVolume();
+            myMultiUSSweepRecorderAlgorithm = new USSweepRecorderAlgorithm(vec);
+            myMultiUSSweepRecorderAlgorithm->start();
+
+//            onUpdateVolume();
             timer = new QTimer(this);
             connect(timer, SIGNAL(timeout()), this, SLOT(onUpdateVolume()));
-            timer->start(300);
+            timer->start(2000);
         }
 
         void SweepRecAndComp::onUpdateVolume() {
             numberOfPartialSweeps += 1;
-            if (numberOfPartialSweeps == 30) {
-                timer->stop();
-            }
             DataList datalist;
-            if (m_useDummyData) {
-                datalist = m_dataList;
-            } else {
-                myMultiUSSweepRecorderAlgorithm->stop();
-                myMultiUSSweepRecorderAlgorithm->output(datalist);
-            }
+            myMultiUSSweepRecorderAlgorithm->stop();
+            myMultiUSSweepRecorderAlgorithm->output(datalist);
+            myMultiUSSweepRecorderAlgorithm->start();
             UltrasoundSweep *usSweep = static_cast<UltrasoundSweep *>(datalist.getItem(0));
 
             // necessary???
             //   usSweep->tracking()->setTemporalOffset(146);
             Selection sel;
-            sel.setFirst(fmax(((usSweep->size() / 30) * numberOfPartialSweeps)-200, 0));
-            sel.setLast((usSweep->size() / 30) * numberOfPartialSweeps);
+//            sel.setFirst(fmax(((usSweep->size() / 30) * numberOfPartialSweeps) - 200, 0));
+//            sel.setLast((usSweep->size() / 30) * numberOfPartialSweeps);
 
+            sel.setAll(usSweep->size());
             usSweep->setSelection(sel);
-            // usSweep->tracking()->setTemporalOffset(m_robotCtrlUS->getTemporalCalibration());
+//             usSweep->tracking()->setTemporalOffset(m_robotCtrlUS->getTemporalCalibration());
             // setConvexGeometry(usSweep);
             auto *sc2 = new GlSweepCompounding(*usSweep);
             sc2->setMode(0); // GPU    4 is CPU Maximum
@@ -95,14 +90,20 @@ namespace ImFusion {
             }
 
             delete sc2;
-//            if (numberOfPartialSweeps > 1)
-//                compoundAllSweeps();
+            if (numberOfPartialSweeps > 2) {
+//                timer->stop();
+                compoundAllSweeps();
+            }
 
             // if (!partial)
             // {
             //     if (m_SweepRecorder->numberOfPartialSweeps != 1)
             //         compoundAllSweeps(m_SweepRecorder->numberOfPartialSweeps);
             // }
+        }
+        void SweepRecAndComp::stop() {
+            timer->stop();
+            delete myMultiUSSweepRecorderAlgorithm;
         }
 
         void SweepRecAndComp::compoundAllSweeps() {

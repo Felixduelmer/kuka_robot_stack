@@ -50,15 +50,15 @@ include("cmake/definitions.cmake")
 file(GLOB PLUGIN_HEADERS "include/*.h" "include/robotic_vessel/*.h")
 
 set(PLUGIN_SOURCES
-        src/vesselNet.cpp
-        src/SweepRecAndComp.cpp
+        src/vessel_segmentation_listener.cpp
+        src/sweep_rec_and_comp.cpp
         src/RobotControl.cpp
         src/plugin.cpp
         src/factory.cpp
         src/algorithm.cpp
         src/controller.cpp
         src/controller.ui
-        src/vesselNet.cpp include/robotic_vessel/vesselNet.h)
+        src/vessel_segmentation_listener.cpp include/robotic_vessel/vessel_segmentation_listener.h)
 
 add_library(${PROJECT_NAME} SHARED ${PLUGIN_SOURCES} ${PLUGIN_FORMS} ${PLUGIN_HEADERS})
 
