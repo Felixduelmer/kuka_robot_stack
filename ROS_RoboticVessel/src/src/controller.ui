@@ -14,15 +14,22 @@
    <string>Form</string>
   </property>
   <layout class="QGridLayout" name="gridLayout_2">
-   <item row="1" column="0">
-    <widget class="QPushButton" name="PBT_TEST">
-     <property name="text">
-      <string>test</string>
-     </property>
-    </widget>
-   </item>
    <item row="0" column="0">
     <layout class="QVBoxLayout" name="verticalLayout">
+     <item>
+      <widget class="QPushButton" name="pbtConnectRobot">
+       <property name="text">
+        <string>Connect Robot</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="pbtSegmentation">
+       <property name="text">
+        <string>Start Segmentation Stream</string>
+       </property>
+      </widget>
+     </item>
      <item>
       <widget class="QPushButton" name="pbtStart">
        <property name="text">

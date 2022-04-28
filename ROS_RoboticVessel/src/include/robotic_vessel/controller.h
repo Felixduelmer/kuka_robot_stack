@@ -62,6 +62,7 @@
 // #include <functional>
 //#include "robotic_vessel/RobotControl.h"
 #include "robotic_vessel/sweep_rec_and_comp.h"
+#include "RobotControl.h"
 
 class Ui_Controller;
 
@@ -83,6 +84,7 @@ namespace ImFusion {
             void addToMainDataModel(Data *data, const std::string &name);
 
             USSweepRecorderAlgorithm *myMultiUSSweepRecorderAlgorithm;
+            USSweepRecorderController *mySweepController;
 
             QTimer *timer;
         signals:
@@ -103,12 +105,17 @@ namespace ImFusion {
 
             void onStopClicked();
 
+            void onRobotConnectedClicked();
+
+            void onStartSegmentationClicked();
+
         private:
             std::shared_ptr<Ui_Controller> ui_{nullptr}; ///< The actual GUI
             PluginAlgorithm *algorithm_{nullptr};        ///< The algorithm instance
 //      RobotControl *m_robot_control{nullptr};
             SweepRecAndComp *sweepRecAndComp;
             ImageStream *imageStream;
+            RobotControl *robControl;
         };
 
     } // namespace ROS_RoboticVessel

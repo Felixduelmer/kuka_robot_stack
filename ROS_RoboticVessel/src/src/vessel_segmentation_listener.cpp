@@ -3,6 +3,7 @@
 #include <ImFusion/Stream/ImageStream.h>
 #include <ImFusion/Base/MemImage.h>
 #include <chrono>
+#include <ImFusion/Stream/TrackingStreamData.h>
 
 
 namespace ImFusion {
@@ -71,7 +72,7 @@ namespace ImFusion {
             int nHeight = cvOutputImage.rows;
             MemImage *outImg = MemImage::create(Image::UBYTE, nWidth, nHeight, 1, 1);
             memcpy(outImg->data(), cvOutputImage.data, cvOutputImage.rows * cvOutputImage.cols * sizeof(uchar));
-            outImg->setSpacing();
+
             ImageStreamData oisd(this);
             oisd.setTimestampArrival(imgData->timestampArrival());
             oisd.setTimestampDevice(imgData->timestampDevice());

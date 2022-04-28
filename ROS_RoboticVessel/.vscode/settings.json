@@ -19,7 +19,8 @@
         "new": "cpp",
         "bitset": "cpp",
         "initializer_list": "cpp",
-        "string_view": "cpp"
+        "string_view": "cpp",
+        "chrono": "cpp"
     },
     "cmake.sourceDirectory": "${workspaceFolder}/src"
 }

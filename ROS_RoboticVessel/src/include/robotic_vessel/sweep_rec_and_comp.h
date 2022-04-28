@@ -4,9 +4,11 @@
 #include <QtCore/QObject>
 #include <ImFusion/GUI/MainWindowBase.h>
 #include <ImFusion/US/USSweepRecorderAlgorithm.h>
+#include <ImFusion/US/USSweepRecorderController.h>
 #include <ImFusion/Base/DataList.h>
 #include <QtCore/QThread>
 #include <ImFusion/Stream/FakeTrackingStream.h>
+#include <ImFusion/US/UltrasoundSweepRingBuffer.h>
 
 namespace ImFusion {
     namespace ROS_RoboticVessel {
@@ -33,6 +35,7 @@ namespace ImFusion {
             bool m_exportSweeps = false;
             int numberOfPartialSweeps{0};
             DataList m_dataList;
+            UltrasoundSweepRingBuffer* ringBuffer;
             USSweepRecorderAlgorithm *myMultiUSSweepRecorderAlgorithm{};
 
 

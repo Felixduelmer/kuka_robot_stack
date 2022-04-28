@@ -12,7 +12,8 @@ namespace ImFusion {
     namespace ROS_RoboticVessel {
 
 
-        RobotControl::RobotControl() {
+        RobotControl::RobotControl(MainWindowBase *mainWindowBase)
+            : m_main(mainWindowBase) {
             onInitROS();
 
             probe_rotation_.block<4, 4>(0, 0) << 0, 0, 1, 0,
