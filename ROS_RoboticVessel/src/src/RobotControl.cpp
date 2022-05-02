@@ -13,7 +13,7 @@ namespace ImFusion {
 
 
         RobotControl::RobotControl(MainWindowBase *mainWindowBase)
-            : m_main(mainWindowBase) {
+                : m_main(mainWindowBase) {
             onInitROS();
 
             probe_rotation_.block<4, 4>(0, 0) << 0, 0, 1, 0,
@@ -24,10 +24,53 @@ namespace ImFusion {
 
         RobotControl::~RobotControl() { disconnect(); }
 
+        //execute a movement along defined points
+        void RobotControl::executeTrajectory() {
+
+            LOG_INFO("Start to exexute Trajectory");
+            n_poses = manual_traj_points_.size();
+            start_pose = getCurrentRobotPose();
+            LOG_INFO("Number of points to go to: " + std::to_string(n_poses));
+            FinishedMoveToNewPointCallback();
+
+        }
+
+
+//Callback to continue trajectory
+        void RobotControl::FinishedMoveToNewPointCallback() {
+
+            LOG_INFO("FinishedMoveToNewPointCallback");
+            if (m_nTrajPoints < n_poses && m_nTrajPoints >= 0) {
+                if (m_nTrajPoints == 1) {
+                    emit reachedStartingPoint();
+                }
+                onMoveToNewPoint();
+                m_nTrajPoints++;
+            } else {
+                if (m_nTrajPoints == n_poses) {
+                    LOG_INFO("reached final point");
+                    m_nTrajPoints = 0;
+                    executeCartesianCommand(start_pose.pose, true, nullptr);
+                    LOG_INFO("Going to home position");
+                    emit reachedEndPoint();
+                }
+            }
+        }
+
+//execute a movement along defined points
+        void RobotControl::onMoveToNewPoint() {
+
+            LOG_INFO("onMoveToNewPoint");
+            LOG_INFO("Current destination point : " + std::to_string(m_nTrajPoints));
+            executeCartesianCommand(manual_traj_points_[m_nTrajPoints].pose, true,
+                                    std::bind(&RobotControl::FinishedMoveToNewPointCallback, this));
+
+        }
+
 
 //initialize the ros related node.
         void RobotControl::onInitROS() {
-            std::map <std::string, std::string> emptyArgs;
+            std::map<std::string, std::string> emptyArgs;
             if (!ros::isInitialized()) { ros::init(emptyArgs, "iiwaRos"); }
             ros_spinner_ = std::make_unique<ros::AsyncSpinner>(1);
             ros_spinner_->start();
@@ -41,7 +84,7 @@ namespace ImFusion {
 
         void RobotControl::connect(const std::string &probe_name) {
             //innitialize Ros and iiwaRos object
-            std::map <std::string, std::string> emptyArgs;
+            std::map<std::string, std::string> emptyArgs;
             if (!ros::isInitialized()) { ros::init(emptyArgs, "iiwaRos"); }
             ros_spinner_ = std::make_unique<ros::AsyncSpinner>(1);
             ros_spinner_->start();
@@ -82,7 +125,7 @@ namespace ImFusion {
 
         void RobotControl::poseCallback(const iiwa_msgs::CartesianPose &pose) {
             if (is_robot_connected_) {
-                std::lock_guard <std::mutex> lock{pose_mutex_};
+                std::lock_guard<std::mutex> lock{pose_mutex_};
                 current_tip_pose_ = pose.poseStamped;   //this would be updated after connect automatically
 
                 //! This object is disposed by the destructor of TrackingStreamData, or at least so it says its documentation.
@@ -100,7 +143,7 @@ namespace ImFusion {
                 current_image_center_pose_.pose = eigenMat4ToPose(image_center_pose);
                 current_image_center_pose_.header = pose.poseStamped.header;
 
-                std::vector < TrackingInstrument * > instrument_vector{tracking_instrument};
+                std::vector<TrackingInstrument *> instrument_vector{tracking_instrument};
                 TrackingStreamData datas(tracking_stream_, instrument_vector);
 
                 std::chrono::system_clock::time_point arrivalTime = std::chrono::high_resolution_clock::now();
@@ -114,7 +157,7 @@ namespace ImFusion {
 
         void RobotControl::wrenchCallback(const iiwa_msgs::CartesianWrench &wench) {
             if (is_robot_connected_) {
-                std::lock_guard <std::mutex> lock{wrench_mutex_};
+                std::lock_guard<std::mutex> lock{wrench_mutex_};
                 current_tip_wrench_ = wench.wrench;   //this would be updated after connect automatically
 
                 emit wrenchChanged();
@@ -189,7 +232,7 @@ namespace ImFusion {
         geometry_msgs::PoseStamped RobotControl::getCurrentRobotPose() {
             assert(is_robot_connected_ == true &&
                    "The robot has to be connected before receiving any state. Call the 'connect()' method.");
-            std::lock_guard <std::mutex> lock{pose_mutex_};
+            std::lock_guard<std::mutex> lock{pose_mutex_};
             return current_tip_pose_;
         }
 
@@ -198,7 +241,7 @@ namespace ImFusion {
         RobotControl::getCurrentRobotTransformMatrix(bool in_millimeters) {                 //自变量为：是否是“厘米”单位
             assert(is_robot_connected_ == true &&
                    "The robot has to be connected before receiving any state. Call the 'connect()' method.");
-            std::lock_guard <std::mutex> lock{pose_mutex_};
+            std::lock_guard<std::mutex> lock{pose_mutex_};
             double scaling_factor{1};
             if (in_millimeters) { scaling_factor = 1000; }
             return poseToEigenMat4(current_tip_pose_.pose, scaling_factor);
@@ -207,7 +250,7 @@ namespace ImFusion {
         geometry_msgs::PoseStamped RobotControl::getCurrentImageCenterPose() {
             assert(is_robot_connected_ == true &&
                    "The robot has to be connected before receiving any state. Call the 'connect()' method.");
-            std::lock_guard <std::mutex> lock{pose_mutex_};
+            std::lock_guard<std::mutex> lock{pose_mutex_};
             return current_image_center_pose_;
         }
 
@@ -215,7 +258,7 @@ namespace ImFusion {
         geometry_msgs::Wrench RobotControl::getCurrentRobotWrench() {
             assert(is_robot_connected_ == true &&
                    "The robot has to be connected before receiving any state. Call the 'connect()' method.");
-            std::lock_guard <std::mutex> lock{wrench_mutex_};  //std::lock_guard用来提供自动为互斥量上锁和解锁的功能
+            std::lock_guard<std::mutex> lock{wrench_mutex_};  //std::lock_guard用来提供自动为互斥量上锁和解锁的功能
             return current_tip_wrench_;
         }
 

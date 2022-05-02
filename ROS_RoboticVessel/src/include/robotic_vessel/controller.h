@@ -80,22 +80,14 @@ namespace ImFusion {
             virtual ~PluginController() = default;
 
             void init();
-
-            void addToMainDataModel(Data *data, const std::string &name);
-
-            USSweepRecorderAlgorithm *myMultiUSSweepRecorderAlgorithm;
-            USSweepRecorderController *mySweepController;
+            void startRecording();
 
             QTimer *timer;
         signals:
 
             void sweepFinished(bool partial);
 
-            void startRecording();
-
             void start();
-
-            void pause();
 
             void stop();
 
@@ -105,11 +97,19 @@ namespace ImFusion {
 
             void onStopClicked();
 
-            void onRobotConnectedClicked();
+            void onConnectRobotClicked();
 
             void onStartSegmentationClicked();
 
+            void onClickedpbtnAddPoint();
+
+            void onStartImpedanceControl();
+
+            void onClickedpbtnDeletePoints();
+
+
         private:
+
             std::shared_ptr<Ui_Controller> ui_{nullptr}; ///< The actual GUI
             PluginAlgorithm *algorithm_{nullptr};        ///< The algorithm instance
 //      RobotControl *m_robot_control{nullptr};

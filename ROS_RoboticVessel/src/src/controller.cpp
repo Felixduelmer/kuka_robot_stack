@@ -40,39 +40,65 @@ namespace ImFusion {
         void PluginController::init() {
             addToAlgorithmDock();
 
-            connect(ui_->pbtConnectRobot, &QPushButton::clicked, this, &PluginController::onRobotConnectedClicked);
+            connect(ui_->pbtConnectRobot, &QPushButton::clicked, this, &PluginController::onConnectRobotClicked);
             connect(ui_->pbtStart, &QPushButton::clicked, this, &PluginController::onStartClicked);
             connect(ui_->pbtStop, &QPushButton::clicked, this, &PluginController::onStopClicked);
             connect(ui_->pbtSegmentation, &QPushButton::clicked, this,
                     &PluginController::onStartSegmentationClicked);
+            connect(ui_->pbtnAddPoint, &QPushButton::clicked, this, &PluginController::onClickedpbtnAddPoint);
+            connect(ui_->pbtnDeletePoints, &QPushButton::clicked, this, &PluginController::onClickedpbtnDeletePoints);
+            connect(ui_->pbtnImpedanceCtrl, &QPushButton::clicked, this, &PluginController::onStartImpedanceControl);
 
-            sweepRecAndComp = new SweepRecAndComp(m_main);
+
             robControl = new RobotControl(m_main);
+            sweepRecAndComp = new SweepRecAndComp(m_main);
+
+            connect(robControl, &RobotControl::reachedStartingPoint, this, &PluginController::startRecording);
+            connect(robControl, &RobotControl::reachedEndPoint, this, &PluginController::onStopClicked);
+//
 //            cv::namedWindow("usImage");
 //            cv::namedWindow("dopplerImage");
 //            cv::namedWindow("segImage");
         }
 
-        void PluginController::onStartClicked() {
+        void PluginController::startRecording() {
             sweepRecAndComp->startSweepRecording();
         }
 
+
+        void PluginController::onStartClicked() {
+            robControl->executeTrajectory();
+
+        }
+
         void PluginController::onStopClicked() {
-            imageStream->stop();
-            imageStream->close();
+//            imageStream->stop();
+//            imageStream->close();
             sweepRecAndComp->stop();
 
         }
 
-        void PluginController::addToMainDataModel(Data *data, const std::string &name) {
-            m_main->dataModel()->add(data, name);
-        }
-
-        void PluginController::onRobotConnectedClicked() {
+        void PluginController::onConnectRobotClicked() {
             robControl->connect("IFLConvex");
             robControl->addStreamToDataModel(m_main->dataModel());
-
         }
+
+        void PluginController::onClickedpbtnAddPoint() {
+            if (robControl->isRobotConnected()) {
+                robControl->addPointConfiguration(robControl->getCurrentRobotPose());
+            }
+        }
+
+        void PluginController::onStartImpedanceControl() {
+            if (robControl->isRobotConnected()) { robControl->applyDesiredForce(iiwa_msgs::DOF::Z, 2, 300); }
+            LOG_INFO("Applying Force!");
+        }
+
+
+        void PluginController::onClickedpbtnDeletePoints() {
+            robControl->deletePointConfigurations();
+        }
+
 
         void PluginController::onStartSegmentationClicked() {
             if (useDumyData) {

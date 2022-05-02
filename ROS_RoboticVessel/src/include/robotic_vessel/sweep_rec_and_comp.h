@@ -21,10 +21,13 @@ namespace ImFusion {
             void startSweepRecording();
 
             void compoundAllSweeps();
+
             void stop();
 
             std::string getDayAndTime();
+
         public slots:
+
             void onUpdateVolume();
 
 
@@ -35,8 +38,8 @@ namespace ImFusion {
             bool m_exportSweeps = false;
             int numberOfPartialSweeps{0};
             DataList m_dataList;
-            UltrasoundSweepRingBuffer* ringBuffer;
-            USSweepRecorderAlgorithm *myMultiUSSweepRecorderAlgorithm{};
+            UltrasoundSweepRingBuffer *ringBuffer;
+            USSweepRecorderAlgorithm *sweepRecorderAlgorithm{};
 
 
         };

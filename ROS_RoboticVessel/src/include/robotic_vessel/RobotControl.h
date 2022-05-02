@@ -66,7 +66,7 @@ namespace ImFusion {
         class RobotControl : public QObject {
         Q_OBJECT
         public:
-            RobotControl(MainWindowBase *mainWindowBase);
+            explicit RobotControl(MainWindowBase *mainWindowBase);
 
             ~RobotControl();
 
@@ -78,6 +78,13 @@ namespace ImFusion {
             void connect(const std::string &probe_name);
 
             void disconnect();
+
+            //Felix
+            void addPointConfiguration(const geometry_msgs::PoseStamped& pose) {   manual_traj_points_.push_back  (pose); }
+            void deletePointConfigurations() {manual_traj_points_.clear();}
+            void executeTrajectory();
+            void onMoveToNewPoint();
+            void FinishedMoveToNewPointCallback();
 
             inline bool isRobotConnected() { return is_robot_connected_; }
 
@@ -239,6 +246,10 @@ namespace ImFusion {
 
         signals:
 
+            void reachedStartingPoint();
+
+            void reachedEndPoint();
+
             void poseChanged();
 
             void wrenchChanged();
@@ -305,6 +316,11 @@ namespace ImFusion {
             Data *m_robot_stream;
             bool isStopped = false;
             MainWindowBase *m_main{nullptr};
+
+            std::vector<geometry_msgs::PoseStamped> manual_traj_points_{};
+            int m_nTrajPoints{0};
+            int n_poses{0};
+            geometry_msgs::PoseStamped start_pose{};
 
             // the pixel height and width, this is calculated by 55mm depth and 37.5 mm width image
             float m_pixel_height = 0.076f; // in mm

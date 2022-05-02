@@ -29,7 +29,7 @@ namespace ImFusion {
             auto *imgData = dynamic_cast<const ImageStreamData *>(&streamData);
             std::unique_ptr<MemImage> image = imgData->images().front()->clone2();
             at::Tensor tensor = preProcessData(std::move(image));
-            std::cout << "max image value: " << torch::max(tensor) << std::endl;
+//            std::cout << "max image value: " << torch::max(tensor) << std::endl;
             inputs.clear();
             tensor = tensor.toType(torch::kFloat);
             inputs.push_back(tensor.to(at::kCUDA));
@@ -59,20 +59,23 @@ namespace ImFusion {
             cv::Mat cvOutputImage = cv::Mat(cv::Size(320, 320), CV_8U, output_image_tensor.data_ptr<uchar>());
             cv::imshow("segImage", cvOutputImage);
             std::chrono::steady_clock::time_point receivedImageEnd = std::chrono::steady_clock::now();
-            std::cout << "Model took = "
-                      << std::chrono::duration_cast<std::chrono::milliseconds>(end_model - begin_model).count()
-                      << "[µs]" << std::endl;
-            std::cout << "Whole step took = "
-                      << std::chrono::duration_cast<std::chrono::milliseconds>(receivedImageEnd - receivedImage).count()
-                      << "[µs]" << std::endl;
+//            std::cout << "Model took = "
+//                      << std::chrono::duration_cast<std::chrono::milliseconds>(end_model - begin_model).count()
+//                      << "[µs]" << std::endl;
+//            std::cout << "Whole step took = "
+//                      << std::chrono::duration_cast<std::chrono::milliseconds>(receivedImageEnd - receivedImage).count()
+//                      << "[µs]" << std::endl;
 
+            int nWidth = 501;
+            int nHeight = 699;
+            cv::Mat cvOutputResized(nHeight, nWidth, CV_8UC1, cv::Scalar(255));
+            cv::resize(cvOutputImage, cvOutputResized, cvOutputResized.size(), 0, 0);
 
-//                 prepare stream output
-            int nWidth = cvOutputImage.cols;
-            int nHeight = cvOutputImage.rows;
+//                 prepare stream outpuy
             MemImage *outImg = MemImage::create(Image::UBYTE, nWidth, nHeight, 1, 1);
-            memcpy(outImg->data(), cvOutputImage.data, cvOutputImage.rows * cvOutputImage.cols * sizeof(uchar));
+            memcpy(outImg->data(), cvOutputResized.data, cvOutputResized.rows * cvOutputResized.cols * sizeof(uchar));
 
+            outImg->setSpacing(51.3/nWidth, 45.0/nHeight, 1);
             ImageStreamData oisd(this);
             oisd.setTimestampArrival(imgData->timestampArrival());
             oisd.setTimestampDevice(imgData->timestampDevice());

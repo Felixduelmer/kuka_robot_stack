@@ -67,16 +67,16 @@ namespace ImFusion {
 //            vec.push_back((imageStream));
 //            vec.push_back((robStream));
 //
-//            USSweepRecorderAlgorithm *myMultiUSSweepRecorderAlgorithm = new USSweepRecorderAlgorithm(vec);
+//            USSweepRecorderAlgorithm *sweepRecorderAlgorithm = new USSweepRecorderAlgorithm(vec);
 //            USSweepRecorderController *mySweepController = new USSweepRecorderController(
-//                    myMultiUSSweepRecorderAlgorithm);
+//                    sweepRecorderAlgorithm);
 ////            mySweepController->init();
-//            myMultiUSSweepRecorderAlgorithm->start();
-//            myMultiUSSweepRecorderAlgorithm->recorder();
+//            sweepRecorderAlgorithm->start();
+//            sweepRecorderAlgorithm->recorder();
 //
 //            auto sweepBuffer = mySweepController->liveSweep();
 //            sweepBuffer->setBufferSize(100);
-//            main->dataModel()->add(*myMultiUSSweepRecorderAlgorithm->trackingStream(), "live strream");
+//            main->dataModel()->add(*sweepRecorderAlgorithm->trackingStream(), "live strream");
 
 
         }

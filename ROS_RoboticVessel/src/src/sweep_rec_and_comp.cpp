@@ -16,6 +16,9 @@
 #include <ImFusion/US/USSweepRecorderController.h>
 #include <ImFusion/US/LiveSweepRecordingVisualizationController.h>
 #include <ImFusion/US/UltrasoundSweepRingBuffer.h>
+#include <ImFusion/Base/BasicImageProcessing.h>
+#include <ImFusion/GL/IntensityMask.h>
+
 
 
 #define ON_NOTREADY -1
@@ -26,7 +29,7 @@ namespace ImFusion {
     namespace ROS_RoboticVessel {
 
         SweepRecAndComp::SweepRecAndComp(MainWindowBase *mainWindowBase)
-                : m_main(mainWindowBase) {
+                : m_main(mainWindowBase ) {
         }
 
         void SweepRecAndComp::startSweepRecording() {
@@ -48,33 +51,34 @@ namespace ImFusion {
             vec.push_back((usStream));
             vec.push_back((robStream));
 
-            myMultiUSSweepRecorderAlgorithm = new USSweepRecorderAlgorithm(vec);
-            myMultiUSSweepRecorderAlgorithm->start();
+            sweepRecorderAlgorithm = new USSweepRecorderAlgorithm(vec);
+            sweepRecorderAlgorithm->start();
             Properties ctrlRecorder;
             ctrlRecorder.addSubProperties("Controller");
-            m_main->addAlgorithm(myMultiUSSweepRecorderAlgorithm, &ctrlRecorder);
+            m_main->addAlgorithm(sweepRecorderAlgorithm, &ctrlRecorder);
             USSweepRecorderController *controller = dynamic_cast<USSweepRecorderController *>(m_main->getAlgorithmController(
-                    myMultiUSSweepRecorderAlgorithm));
+                    sweepRecorderAlgorithm));
 
             ringBuffer = controller->liveSweep();
-            ringBuffer->setBufferSize(100000000);
-
-            timer = new QTimer(this);
-            connect(timer, SIGNAL(timeout()), this, SLOT(onUpdateVolume()));
-            timer->start(15000);
+            ringBuffer->setBufferSize(999999999);
+//            IntensityMask intensityMask = new IntensityMask();
+//            ringBuffer->setMask()
+//            timer = new QTimer(this);
+//            connect(timer, SIGNAL(timeout()), this, SLOT(onUpdateVolume()));
+//            timer->start(15000);
         }
 
         void SweepRecAndComp::onUpdateVolume() {
             numberOfPartialSweeps += 1;
             DataList datalist;
-//            SharedImageSet* imageSet = new SharedImageSet(ringBuffer->get());
-//            UltrasoundSweep *usSweep = static_cast<UltrasoundSweep *>(imageSet);
+//            sweepRecorderAlgorithm->stop();
+//            sweepRecorderAlgorithm->output(datalist);
+//            sweepRecorderAlgorithm->start();
+//            UltrasoundSweep *usSweep = static_cast<UltrasoundSweep *>(datalist.getItem(0));
 
             // necessary???
             //   usSweep->tracking()->setTemporalOffset(146);
             Selection sel;
-//            sel.setFirst(fmax(((usSweep->size() / 30) * numberOfPartialSweeps) - 200, 0));
-//            sel.setLast((usSweep->size() / 30) * numberOfPartialSweeps);
 
             sel.setAll(ringBuffer->size());
             ringBuffer->setSelection(sel);
@@ -86,38 +90,18 @@ namespace ImFusion {
             DataList datalist3;
             sc2->output(datalist3);
 
-            auto data = dynamic_cast<SharedImageSet *>(m_main->dataModel()->get("Partial Volume"));
-            std::cout << (data) << std::endl;
-            if (data != 0) {
-                auto datacopy = data->clone2();
-                m_main->dataModel()->remove(data);
+            m_main->dataModel()->add(datalist3.getItem(0), "Partial Volume ");
 //            m_main->dataModel()->add(usSweep, "Partial Sweep ");
-                DataList outputVolume;
-                GlVolumeCompounding *volumeCompounding;
 
-                auto container = new SharedImageSet();
-                container->add(datacopy->get(0));
-                container->add(datalist3.getImage(Data::VOLUME)->get(0));
-
-                volumeCompounding = new GlVolumeCompounding(container); // own the container
-                volumeCompounding->setUseGPU(true);
-                volumeCompounding->setMode(GlVolumeCompounding::MEDIAN);
-                volumeCompounding->compute();
-                volumeCompounding->output(outputVolume);
-
-                m_main->dataModel()->add(outputVolume.getItem(0), "Partial Volume");
-            } else {
-                m_main->dataModel()->add(datalist3.getItem(0), "Partial Volume ");
-            }
-            if (m_exportSweeps) {
-                auto sis = static_cast<SharedImageSet *>(datalist3.getItem(0));
-                sis->get()->sync();
-                auto str = getDayAndTime();
-                BackgroundExporter *sweepExporter = new BackgroundExporter();
-                sweepExporter->save(ringBuffer, "/home/javi/Data/VienaRoboticSpine/sweep_" + str + ".imf");
-                BackgroundExporter *volExporter = new BackgroundExporter();
-                volExporter->save(sis, "/home/javi/Data/VienaRoboticSpine/vol_" + str + ".imf");
-            }
+//            if (m_exportSweeps) {
+//                auto sis = static_cast<SharedImageSet *>(datalist3.getItem(0));
+//                sis->get()->sync();
+//                auto str = getDayAndTime();
+//                BackgroundExporter *sweepExporter = new BackgroundExporter();
+//                sweepExporter->save(usSweep, "/home/javi/Data/VienaRoboticSpine/sweep_" + str + ".imf");
+//                BackgroundExporter *volExporter = new BackgroundExporter();
+//                volExporter->save(sis, "/home/javi/Data/VienaRoboticSpine/vol_" + str + ".imf");
+//            }
 
             delete sc2;
 //            if (numberOfPartialSweeps > 2) {
@@ -133,8 +117,9 @@ namespace ImFusion {
         }
 
         void SweepRecAndComp::stop() {
-            timer->stop();
-            delete myMultiUSSweepRecorderAlgorithm;
+            onUpdateVolume();
+//            /?timer->stop();
+//            delete sweepRecorderAlgorithm;
         }
 
         void SweepRecAndComp::compoundAllSweeps() {
