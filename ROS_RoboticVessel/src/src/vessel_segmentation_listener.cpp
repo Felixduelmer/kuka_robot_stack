@@ -10,6 +10,7 @@ namespace ImFusion {
     namespace ROS_RoboticVessel {
         LiveSegmentationStream::LiveSegmentationStream(ImageStream *imgStream) : m_inStream(
                 imgStream) {
+//            qRegisterMetaType<cv::Mat>("cvMat");
             m_inStream->addListener(this);
             try {
                 model = torch::jit::load("/home/robotics-verse/projects/felix/traced_vesnet_model.pt");
@@ -18,6 +19,10 @@ namespace ImFusion {
             } catch (...) {
                 std::cout << "encountered an error loading the model!" << std::endl;
             }
+            tracker = new Tracker();
+            bool success = connect(this, &LiveSegmentationStream::newDopplerImage, tracker,
+                    &Tracker::doppler_tracker);
+            Q_ASSERT(success);
         }
 
         LiveSegmentationStream::LiveSegmentationStream() {
@@ -57,7 +62,7 @@ namespace ImFusion {
             }
 
             cv::Mat cvOutputImage = cv::Mat(cv::Size(320, 320), CV_8U, output_image_tensor.data_ptr<uchar>());
-            cv::imshow("segImage", cvOutputImage);
+//            cv::imshow("segImage", cvOutputImage);
             std::chrono::steady_clock::time_point receivedImageEnd = std::chrono::steady_clock::now();
 //            std::cout << "Model took = "
 //                      << std::chrono::duration_cast<std::chrono::milliseconds>(end_model - begin_model).count()
@@ -75,7 +80,7 @@ namespace ImFusion {
             MemImage *outImg = MemImage::create(Image::UBYTE, nWidth, nHeight, 1, 1);
             memcpy(outImg->data(), cvOutputResized.data, cvOutputResized.rows * cvOutputResized.cols * sizeof(uchar));
 
-            outImg->setSpacing(51.3/nWidth, 45.0/nHeight, 1);
+            outImg->setSpacing(51.3 / nWidth, 45.0 / nHeight, 1);
             ImageStreamData oisd(this);
             oisd.setTimestampArrival(imgData->timestampArrival());
             oisd.setTimestampDevice(imgData->timestampDevice());
@@ -109,8 +114,9 @@ namespace ImFusion {
             cv::cvtColor(doppler_thres_col, doppler_final, cv::COLOR_BGR2GRAY);
             cv::cvtColor(us_image_resized, us_final, cv::COLOR_BGR2GRAY);
 
-            cv::imshow("usImage", us_final);
-            cv::imshow("dopplerImage", doppler_final);
+//            cv::imshow("usImage", us_final);
+//            cv::imshow("dopplerImage", doppler_final);
+            emit newDopplerImage(doppler_final.clone());
 
             return toTensor(us_final, doppler_final);
 

@@ -58,7 +58,9 @@ set(PLUGIN_SOURCES
         src/algorithm.cpp
         src/controller.cpp
         src/controller.ui
-        src/vessel_segmentation_listener.cpp include/robotic_vessel/vessel_segmentation_listener.h)
+        src/vessel_segmentation_listener.cpp
+        src/tracker.cpp
+        )
 
 add_library(${PROJECT_NAME} SHARED ${PLUGIN_SOURCES} ${PLUGIN_FORMS} ${PLUGIN_HEADERS})
 

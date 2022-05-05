@@ -25,6 +25,7 @@
 #include "robotic_vessel/vessel_segmentation_listener.h"
 #include <opencv2/opencv.hpp>
 
+
 const bool useDumyData = false;
 
 namespace ImFusion {
@@ -34,6 +35,7 @@ namespace ImFusion {
                 : AlgorithmController(algorithm), algorithm_{algorithm} {
             ui_ = std::make_shared<Ui_Controller>();
             ui_->setupUi(this);
+            qRegisterMetaType<cv::Mat>("cvMat");
         }
 
 
@@ -50,15 +52,19 @@ namespace ImFusion {
             connect(ui_->pbtnImpedanceCtrl, &QPushButton::clicked, this, &PluginController::onStartImpedanceControl);
 
 
-            robControl = new RobotControl(m_main);
-            sweepRecAndComp = new SweepRecAndComp(m_main);
+//            robControl = new RobotControl(m_main);
+//            sweepRecAndComp = new SweepRecAndComp(m_main);
 
-            connect(robControl, &RobotControl::reachedStartingPoint, this, &PluginController::startRecording);
-            connect(robControl, &RobotControl::reachedEndPoint, this, &PluginController::onStopClicked);
+//            connect(robControl, &RobotControl::reachedStartingPoint, this, &PluginController::startRecording);
+//            connect(robControl, &RobotControl::reachedEndPoint, this, &PluginController::onStopClicked);
 //
 //            cv::namedWindow("usImage");
 //            cv::namedWindow("dopplerImage");
 //            cv::namedWindow("segImage");
+            cv::namedWindow("dopplerImage");
+            cv::namedWindow("annotationImage");
+            cv::namedWindow("contImage");
+
         }
 
         void PluginController::startRecording() {
@@ -67,7 +73,7 @@ namespace ImFusion {
 
 
         void PluginController::onStartClicked() {
-            robControl->executeTrajectory();
+//            robControl->executeTrajectory();
 
         }
 
@@ -79,24 +85,25 @@ namespace ImFusion {
         }
 
         void PluginController::onConnectRobotClicked() {
-            robControl->connect("IFLConvex");
-            robControl->addStreamToDataModel(m_main->dataModel());
+//            robControl->connect("IFLConvex");
+//            robControl->addStreamToDataModel(m_main->dataModel());
         }
 
         void PluginController::onClickedpbtnAddPoint() {
-            if (robControl->isRobotConnected()) {
-                robControl->addPointConfiguration(robControl->getCurrentRobotPose());
-            }
+
+//            if (robControl->isRobotConnected()) {
+//                robControl->addPointConfiguration(robControl->getCurrentRobotPose());
+//            }
         }
 
         void PluginController::onStartImpedanceControl() {
-            if (robControl->isRobotConnected()) { robControl->applyDesiredForce(iiwa_msgs::DOF::Z, 2, 300); }
+//            if (robControl->isRobotConnected()) { robControl->applyDesiredForce(iiwa_msgs::DOF::Z, 2, 300); }
             LOG_INFO("Applying Force!");
         }
 
 
         void PluginController::onClickedpbtnDeletePoints() {
-            robControl->deletePointConfigurations();
+//            robControl->deletePointConfigurations();
         }
 
 

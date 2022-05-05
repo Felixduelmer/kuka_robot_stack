@@ -65,6 +65,7 @@
 #include "RobotControl.h"
 
 class Ui_Controller;
+Q_DECLARE_METATYPE(cv::Mat)
 
 namespace ImFusion {
     namespace ROS_RoboticVessel {
@@ -115,7 +116,7 @@ namespace ImFusion {
 //      RobotControl *m_robot_control{nullptr};
             SweepRecAndComp *sweepRecAndComp;
             ImageStream *imageStream;
-            RobotControl *robControl;
+//            RobotControl *robControl;
         };
 
     } // namespace ROS_RoboticVessel
