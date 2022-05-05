@@ -36,6 +36,7 @@ namespace ImFusion {
             int* numPastFrames = &numPast;
             int* minOccurence = &occ;
             int* maxDistance = &dista;
+            int trackId = 0;
         };
     }
 }

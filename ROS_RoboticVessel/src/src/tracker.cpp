@@ -25,7 +25,6 @@ namespace ImFusion {
             long _numPastFrames = *numPastFrames;
             float _minOccurence = (*minOccurence)/10.0;
             int _maxDistance = *maxDistance;
-            int trackId = 0;
             cv::createTrackbar("MaxDistance",
                                "dopplerImage", maxDistance,
                                150, &dummyCallback); // Create a Trackbar to choose type of Threshold
