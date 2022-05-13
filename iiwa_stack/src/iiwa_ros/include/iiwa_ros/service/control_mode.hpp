@@ -228,6 +228,7 @@ public:
                           const iiwa_msgs::CartesianQuantity& max_cartesian_velocity,
                           const iiwa_msgs::CartesianQuantity& max_control_force, const bool max_control_force_stop);
 
+  bool setCartesianVelocity(const iiwa_msgs::CartesianQuantity& max_cartesian_velocity);
 protected:
   virtual bool callService() override;
 

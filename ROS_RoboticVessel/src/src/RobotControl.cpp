@@ -5,6 +5,10 @@
 #include <ImFusion/Stream/TrackingStreamData.h>
 #include <QDebug>
 #include <QVector3D>
+#include <QObject>
+#include <QThread>
+#include <geometry_msgs/Twist.h>
+#include <iiwa_msgs/SetSmartServoLinSpeedLimits.h>
 
 using namespace std;
 using namespace cv;
@@ -12,27 +16,27 @@ namespace ImFusion {
     namespace ROS_RoboticVessel {
 
 
-        RobotControl::RobotControl(MainWindowBase *mainWindowBase)
-                : m_main(mainWindowBase) {
+        RobotControl::RobotControl() {
             onInitROS();
 
             probe_rotation_.block<4, 4>(0, 0) << 0, 0, 1, 0,
                     1, 0, 0, 0,
                     0, 1, 0, 29,
                     0, 0, 0, 1;
+            connect(this, &RobotControl::poseChanged, this, &RobotControl::customPoseCallback);
         }
 
         RobotControl::~RobotControl() { disconnect(); }
 
         //execute a movement along defined points
         void RobotControl::executeTrajectory() {
-
-            LOG_INFO("Start to exexute Trajectory");
-            n_poses = manual_traj_points_.size();
+            LOG_INFO("Start to execute Trajectory");
+            motionState = TRAJECTORY_MOTION;
+            std::transform(manualTrajPoints.begin(), manualTrajPoints.end(), std::back_inserter(qManualTrajPoints),
+                           [](Eigen::Matrix4d mat) { return Eigen::Quaterniond{mat.block<3, 3>(0, 0)}; });
             start_pose = getCurrentRobotPose();
-            LOG_INFO("Number of points to go to: " + std::to_string(n_poses));
-            FinishedMoveToNewPointCallback();
-
+            LOG_INFO("Number of points to go to: " + std::to_string(            manualTrajPoints.size()));
+            onMoveToNewPoint();
         }
 
 
@@ -40,17 +44,20 @@ namespace ImFusion {
         void RobotControl::FinishedMoveToNewPointCallback() {
 
             LOG_INFO("FinishedMoveToNewPointCallback");
-            if (m_nTrajPoints < n_poses && m_nTrajPoints >= 0) {
-                if (m_nTrajPoints == 1) {
+            if (currentTargetPoint < manualTrajPoints.size()) {
+                if (currentTargetPoint == 1) {
                     emit reachedStartingPoint();
+                    LOG_INFO("Applying Force!");
                 }
+                applyDesiredForce(iiwa_msgs::DOF::Z, 1, 200);
                 onMoveToNewPoint();
-                m_nTrajPoints++;
             } else {
-                if (m_nTrajPoints == n_poses) {
+                if (currentTargetPoint == manualTrajPoints.size()) {
                     LOG_INFO("reached final point");
-                    m_nTrajPoints = 0;
-                    executeCartesianCommand(start_pose.pose, true, nullptr);
+                    motionState = NO_TRACKED_MOTION;
+                    currentTargetPoint = 0;
+                    applyPositionControlMode();
+                    executeCartesianCommand(start_pose.pose, true);
                     LOG_INFO("Going to home position");
                     emit reachedEndPoint();
                 }
@@ -59,12 +66,9 @@ namespace ImFusion {
 
 //execute a movement along defined points
         void RobotControl::onMoveToNewPoint() {
-
             LOG_INFO("onMoveToNewPoint");
-            LOG_INFO("Current destination point : " + std::to_string(m_nTrajPoints));
-            executeCartesianCommand(manual_traj_points_[m_nTrajPoints].pose, true,
-                                    std::bind(&RobotControl::FinishedMoveToNewPointCallback, this));
-
+            LOG_INFO("Current destination point : " + std::to_string(currentTargetPoint));
+            executeCartesianCommand(manualTrajPoints[currentTargetPoint], true);
         }
 
 
@@ -82,7 +86,7 @@ namespace ImFusion {
             LOG_INFO(this->m_ros_initialized);
         }
 
-        void RobotControl::connect(const std::string &probe_name) {
+        void RobotControl::connectRobot(const std::string &probe_name) {
             //innitialize Ros and iiwaRos object
             std::map<std::string, std::string> emptyArgs;
             if (!ros::isInitialized()) { ros::init(emptyArgs, "iiwaRos"); }
@@ -99,6 +103,23 @@ namespace ImFusion {
             linear_pose_command_.init("iiwa");
 
             control_mode_.init("iiwa");
+
+            ros::ServiceClient client = node_handle.serviceClient<iiwa_msgs::SetSmartServoLinSpeedLimits>(
+                    "/iiwa/configuration/setSmartServoLinLimits");
+            iiwa_msgs::SetSmartServoLinSpeedLimits srv;
+            srv.request.max_cartesian_velocity.angular.x = 0.1;
+            srv.request.max_cartesian_velocity.angular.y = 0.1;
+            srv.request.max_cartesian_velocity.angular.z = 0.1;
+            srv.request.max_cartesian_velocity.linear.x = 0.01;
+            srv.request.max_cartesian_velocity.linear.y = 0.01;
+            srv.request.max_cartesian_velocity.linear.z = 0.01;
+            if (client.call(srv)) {
+                ROS_INFO("Setting Smart Servo Speed success");
+            } else {
+                ROS_ERROR("Failed to call service SetSmartServoLinSpeedLimits");
+            }
+
+            node_handle.setParam("/iiwa/toolName", "linear");
 
             OpenIGTLinkConnection dummy_connection("Service robot connection");
             tracking_stream_ = new OpenIGTLinkTrackingStream(dummy_connection, "Robot");
@@ -391,6 +412,131 @@ namespace ImFusion {
             curr_pos.block<3, 1>(0, 3) = vecPosition;
 
             return curr_pos;
+        }
+
+        void RobotControl::performFanMotion() {
+            blockFanMotion = true;
+            motionState = FAN_MOTION;
+            if (fanIter == 0) {
+                Eigen::Quaterniond qCurrent{getCurrentRobotTransformMatrix().block<3, 3>(0, 0)};
+                auto distance = qManualTrajPoints[currentTargetPoint].angularDistance(qCurrent);
+                if (fabs(distance) > 20.0 * (M_PI / 180.0)) {
+                    //if the distance is positive we want to go back
+                    double const sign = (distance >= 0) ? -1 : 1;
+                    for (int i = 0; i < offsetArr.size(); i++) {
+                        offsetArr[i] = 5 * sign;
+                    }
+                } else {
+                    offsetArr[0] = -10;
+                    for (int i = 1; i < offsetArr.size(); i++) {
+                        offsetArr[i] = 5;
+                    }
+                    fanIter = 0;
+                }
+                applyPositionControlMode();
+                std::cout << offsetArr[0] << offsetArr[1] << offsetArr[2] << offsetArr[3] << offsetArr[4] << std::endl;
+            }
+            //check if doppler has been found
+            sleep(2);
+            if (!doppler_found && fanIter < offsetArr.size()) {
+                RotateAroundTCP(offsetArr[fanIter], ROTATION_Y, true);
+                ++fanIter;
+            } else {
+                Eigen::Matrix4d currentPose = getCurrentRobotTransformMatrix();
+                if (doppler_found) {
+                    LOG_INFO("We found the doppler --> continuing");
+                    //override the current orientation with the newly found
+                    manualTrajPoints[currentTargetPoint].block<3, 3>(0, 0) = currentPose.block<3, 3>(0, 0);
+                } else {
+                    LOG_INFO("Rotation didn't conclude in a desired result --> continuing");
+                    RotateAroundTCP(offsetArr[2] > 0 ? -10 : 10, ROTATION_Y, false);
+                    sleep(2);
+                }
+                motionState = TRAJECTORY_MOTION;
+                applyDesiredForce(iiwa_msgs::DOF::Z, 1, 200);
+                onMoveToNewPoint();
+                fanIter = 0;
+                sleep(3);
+                blockFanMotion = false;
+            }
+        }
+
+        void RobotControl::RotateAroundTCP(double fOffsetAngle, int nRotationAxis, bool callBack) {
+            LOG_INFO("Rotating around axis to perform a fan motion");
+            auto robot_pose = getCurrentRobotTransformMatrix(true);
+            Eigen::Vector3d translation = robot_pose.block<3, 1>(0, 3);
+            Eigen::Vector3d offsetAngleRad(0.0, 0.0, 0.0);
+            if (ROTATION_X == nRotationAxis) {
+                offsetAngleRad[0] = fOffsetAngle / 180.0 * M_PI;   //unit rad
+                LOG_INFO(fOffsetAngle);
+            } else if (ROTATION_Y == nRotationAxis) {
+                offsetAngleRad[1] = fOffsetAngle / 180.0 * M_PI;   //unit rad
+                LOG_INFO(fOffsetAngle);
+            } else {
+                LOG_INFO("the rotation is wrong");
+            }
+            //obtain the transformation between the target about TCP frame
+            Eigen::Quaterniond tempQuaternion = Eigen::AngleAxisd(offsetAngleRad[0], Eigen::Vector3d::UnitX()) *
+                                                Eigen::AngleAxisd(offsetAngleRad[1], Eigen::Vector3d::UnitY()) *
+                                                Eigen::AngleAxisd(offsetAngleRad[2], Eigen::Vector3d::UnitZ());
+            Eigen::Matrix4d PoseRotateTCP{Eigen::Matrix4d::Identity()};
+
+            PoseRotateTCP.block<3, 3>(0, 0) = tempQuaternion.toRotationMatrix();
+            PoseRotateTCP.block<3, 1>(0, 3) << 0, 0, 0;
+
+            PoseRotateTCP = robot_pose * PoseRotateTCP;
+            PoseRotateTCP.block<3, 1>(0, 3) = translation / 1000.0;
+
+            if (callBack) {
+                manualTrajPoints.insert(manualTrajPoints.begin() + currentTargetPoint, PoseRotateTCP);
+                executeCartesianCommand(PoseRotateTCP, true);
+            } else {
+                executeCartesianCommand(eigenMat4ToPose(PoseRotateTCP), true);
+                sleep(2);
+            }
+
+        }
+
+        void RobotControl::lostDopplerSignal() {
+            if (motionState == TRAJECTORY_MOTION && currentTargetPoint != 0 &&!blockFanMotion) {
+                LOG_INFO("Lost Doppler Signal");
+                doppler_found = false;
+                performFanMotion();
+            }
+        };
+
+        void RobotControl::foundDopplerSignal() {
+            if (motionState == FAN_MOTION) {
+                LOG_INFO("Found Doppler Signal");
+                doppler_found = true;
+            }
+        }
+
+        void RobotControl::customPoseCallback() {
+            if (motionState > NO_TRACKED_MOTION) {
+                //500 hz
+                customPoseCallbackIterator++;
+                if (customPoseCallbackIterator % 10 == 0) {
+                    if (manualTrajPoints[currentTargetPoint].isApprox(
+                            getCurrentRobotTransformMatrix(), 1e-2)) {
+                        LOG_INFO("We have reached the next point");
+                        currentTargetPoint++;
+                        if (motionState == FAN_MOTION) {
+                            performFanMotion();
+                        } else if(motionState == TRAJECTORY_MOTION) {
+                            FinishedMoveToNewPointCallback();
+                        }
+                    }
+                } else if (customPoseCallbackIterator >= 499) {
+                    auto currPose = getCurrentRobotTransformMatrix();
+                    if (currPose.isApprox(lastPose, 1e-5)) {
+                        applyPositionControlMode();
+                        onMoveToNewPoint();
+                    }
+                    lastPose = currPose;
+                    customPoseCallbackIterator = 0;
+                }
+            }
         }
 
 

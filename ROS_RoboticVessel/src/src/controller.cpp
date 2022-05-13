@@ -26,7 +26,7 @@
 #include <opencv2/opencv.hpp>
 
 
-const bool useDumyData = false;
+const bool useDummyData = false;
 
 namespace ImFusion {
     namespace ROS_RoboticVessel {
@@ -52,15 +52,19 @@ namespace ImFusion {
             connect(ui_->pbtnImpedanceCtrl, &QPushButton::clicked, this, &PluginController::onStartImpedanceControl);
 
 
-//            robControl = new RobotControl(m_main);
-//            sweepRecAndComp = new SweepRecAndComp(m_main);
+            robControl = new RobotControl();
+            sweepRecAndComp = new SweepRecAndComp(m_main);
+            tracker = new Tracker();
+            liveSegmentationStream = new LiveSegmentationStream();
 
-//            connect(robControl, &RobotControl::reachedStartingPoint, this, &PluginController::startRecording);
-//            connect(robControl, &RobotControl::reachedEndPoint, this, &PluginController::onStopClicked);
-//
-//            cv::namedWindow("usImage");
-//            cv::namedWindow("dopplerImage");
-//            cv::namedWindow("segImage");
+            connect(robControl, &RobotControl::reachedStartingPoint, this, &PluginController::startRecording);
+            connect(robControl, &RobotControl::reachedEndPoint, this, &PluginController::onStopClicked);
+            connect(tracker, &Tracker::lostDoppler, robControl, &RobotControl::lostDopplerSignal);
+            connect(tracker, &Tracker::foundDoppler, robControl, &RobotControl::foundDopplerSignal);
+
+
+            connect(liveSegmentationStream, &LiveSegmentationStream::newDopplerImage, tracker,
+                    &Tracker::doppler_tracker);
             cv::namedWindow("dopplerImage");
             cv::namedWindow("annotationImage");
             cv::namedWindow("contImage");
@@ -73,42 +77,43 @@ namespace ImFusion {
 
 
         void PluginController::onStartClicked() {
-//            robControl->executeTrajectory();
-
+            robControl->executeTrajectory();
         }
 
         void PluginController::onStopClicked() {
 //            imageStream->stop();
 //            imageStream->close();
             sweepRecAndComp->stop();
+//            robControl->applyPositionControlMode();
 
         }
 
         void PluginController::onConnectRobotClicked() {
-//            robControl->connect("IFLConvex");
-//            robControl->addStreamToDataModel(m_main->dataModel());
+            robControl->connectRobot("IFLConvex");
+            robControl->addStreamToDataModel(m_main->dataModel());
         }
 
         void PluginController::onClickedpbtnAddPoint() {
 
-//            if (robControl->isRobotConnected()) {
-//                robControl->addPointConfiguration(robControl->getCurrentRobotPose());
-//            }
+            if (robControl->isRobotConnected()) {
+                robControl->addPointConfiguration(robControl->getCurrentRobotTransformMatrix());
+            }
         }
 
         void PluginController::onStartImpedanceControl() {
-//            if (robControl->isRobotConnected()) { robControl->applyDesiredForce(iiwa_msgs::DOF::Z, 2, 300); }
-            LOG_INFO("Applying Force!");
+            if (robControl->isRobotConnected()) {
+                robControl->performFanMotion();
+            }
         }
 
 
         void PluginController::onClickedpbtnDeletePoints() {
-//            robControl->deletePointConfigurations();
+            robControl->deletePointConfigurations();
         }
 
 
         void PluginController::onStartSegmentationClicked() {
-            if (useDumyData) {
+            if (useDummyData) {
                 ImFusionFile file("/data1/volume1/data/felix_data/sweeps_imfusion/patient_2/Felix-02.imf");
                 file.open(0);
 
@@ -120,8 +125,8 @@ namespace ImFusion {
             } else {
                 imageStream = static_cast<ImageStream *>(m_main->dataModel()->get("Ultrasound Stream"));
             }
-            auto pLiveSegmentationStream = new LiveSegmentationStream(imageStream);
-            m_main->dataModel()->add(pLiveSegmentationStream, "pLiveSegmentationStream");
+            liveSegmentationStream->addInputStream(imageStream);
+            m_main->dataModel()->add(liveSegmentationStream, "liveSegmentationStream");
             imageStream->open();
             imageStream->start();
         }

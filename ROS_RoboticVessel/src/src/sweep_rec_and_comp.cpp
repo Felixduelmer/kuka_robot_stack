@@ -39,10 +39,10 @@ namespace ImFusion {
             if (m_useLiveData) {
                 robStream = static_cast<LiveTrackingStream *>(m_main->dataModel()->get(
                         "Robot Tracking"));
-                usStream = static_cast<ImageStream *>(m_main->dataModel()->get("pLiveSegmentationStream"));
+                usStream = static_cast<ImageStream *>(m_main->dataModel()->get("liveSegmentationStream"));
             } else {
                 robStream = new FakeTrackingStream();
-                usStream = static_cast<ImageStream *>(m_main->dataModel()->get("pLiveSegmentationStream"));
+                usStream = static_cast<ImageStream *>(m_main->dataModel()->get("liveSegmentationStream"));
                 robStream->open();
                 robStream->start();
             }
@@ -63,25 +63,27 @@ namespace ImFusion {
             ringBuffer->setBufferSize(999999999);
 //            IntensityMask intensityMask = new IntensityMask();
 //            ringBuffer->setMask()
-//            timer = new QTimer(this);
-//            connect(timer, SIGNAL(timeout()), this, SLOT(onUpdateVolume()));
-//            timer->start(15000);
+//            fanMotionTimer = new QTimer(this);
+//            connect(fanMotionTimer, SIGNAL(timeout()), this, SLOT(onUpdateVolume()));
+//            fanMotionTimer->start(15000);
         }
 
         void SweepRecAndComp::onUpdateVolume() {
             numberOfPartialSweeps += 1;
             DataList datalist;
-//            sweepRecorderAlgorithm->stop();
-//            sweepRecorderAlgorithm->output(datalist);
+            sweepRecorderAlgorithm->stop();
+            sweepRecorderAlgorithm->output(datalist);
 //            sweepRecorderAlgorithm->start();
-//            UltrasoundSweep *usSweep = static_cast<UltrasoundSweep *>(datalist.getItem(0));
+            UltrasoundSweep *usSweep = static_cast<UltrasoundSweep *>(datalist.getItem(0));
 
             // necessary???
             //   usSweep->tracking()->setTemporalOffset(146);
             Selection sel;
 
-            sel.setAll(ringBuffer->size());
-            ringBuffer->setSelection(sel);
+            sel.setAll(usSweep->size());
+            usSweep->setSelection(sel);
+//            sel.setAll(ringBuffer->size());
+//            ringBuffer->setSelection(sel);
 //             usSweep->tracking()->setTemporalOffset(m_robotCtrlUS->getTemporalCalibration());
             // setConvexGeometry(usSweep);
             auto *sc2 = new GlSweepCompounding(*ringBuffer);
@@ -105,7 +107,7 @@ namespace ImFusion {
 
             delete sc2;
 //            if (numberOfPartialSweeps > 2) {
-////                timer->stop();
+////                fanMotionTimer->stop();
 //                compoundAllSweeps();
 //            }
 
@@ -118,7 +120,7 @@ namespace ImFusion {
 
         void SweepRecAndComp::stop() {
             onUpdateVolume();
-//            /?timer->stop();
+//            /?fanMotionTimer->stop();
 //            delete sweepRecorderAlgorithm;
         }
 

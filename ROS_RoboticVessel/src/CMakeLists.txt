@@ -16,6 +16,7 @@ find_package(Qt5 COMPONENTS Core Gui Widgets REQUIRED)
 
 find_package(catkin REQUIRED COMPONENTS
         roscpp
+        std_msgs
         sensor_msgs
         iiwa_msgs
         iiwa_ros
@@ -38,6 +39,7 @@ catkin_package(
         LIBRARIES ${PROJECT_NAME}
         CATKIN_DEPENDS
         roscpp
+        std_msgs
         sensor_msgs
         iiwa_msgs
         iiwa_ros

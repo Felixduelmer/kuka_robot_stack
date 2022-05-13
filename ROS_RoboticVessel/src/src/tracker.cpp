@@ -6,24 +6,25 @@
 namespace ImFusion {
     namespace ROS_RoboticVessel {
         Tracker::Tracker() {
+            printf("Test");
 //            qRegisterMetaType<cv::Mat>("cvMat");
-            m_thread.reset(new QThread);
-            moveToThread(m_thread.get());
-            m_thread->start();
+//            m_thread.reset(new QThread);
+//            moveToThread(m_thread.get());
+//            m_thread->start();
         }
 
         Tracker::~Tracker() {
-            QMetaObject::invokeMethod(this, "cleanup");
-            m_thread->wait();
+//            QMetaObject::invokeMethod(this, "cleanup");
+//            m_thread->wait();
         }
 
-        static void dummyCallback(int img, void*) {}
+        static void dummyCallback(int img, void *) {}
 
 
         void Tracker::doppler_tracker(cv::Mat image) {
 
             long _numPastFrames = *numPastFrames;
-            float _minOccurence = (*minOccurence)/10.0;
+            float _minOccurence = (*minOccurence) / 10.0;
             int _maxDistance = *maxDistance;
             cv::createTrackbar("MaxDistance",
                                "dopplerImage", maxDistance,
@@ -60,8 +61,8 @@ namespace ImFusion {
                 contPropCurrFrame.push_back(ContourProperties(center, radius));
                 cv::circle(contImage, center, radius, 255, -1);
             }
-            std::cout << " Size of detected contourproperties: " << contours.size() << std::endl;
-            std::cout << " Size of detected contourproperties with large enough radius: " << contPropCurrFrame.size() << std::endl;
+//            std::cout << " Size of detected contourproperties: " << contours.size() << std::endl;
+//            std::cout << " Size of detected contourproperties with large enough radius: " << contPropCurrFrame.size() << std::endl;
 
 
 
@@ -75,8 +76,8 @@ namespace ImFusion {
                             trackingObj.second.front().getCenter() - contProp.getCenter()));
                 }
                 //if there is an object at a similar location add it to the buffer of this object otherwise add a dummy object
-                for(int i= 0; i < distance.size(); i++){
-                    area.push_back(distance[i]<_maxDistance ? contPropCurrFrame[i].getArea() : 0);
+                for (int i = 0; i < distance.size(); i++) {
+                    area.push_back(distance[i] < _maxDistance ? contPropCurrFrame[i].getArea() : 0);
                 }
                 long idx = std::max_element(area.begin(), area.end()) - area.begin();
                 if (!contPropCurrFrame.empty() && area[idx] != 0) {
@@ -89,8 +90,8 @@ namespace ImFusion {
             }
 
             //add new Ids found
-            std::cout << "Found new contour properties: " << contPropCurrFrame.size() << std::endl;
-            std::cout << "Number of tracking Objects: " << trackingObjects.size() << std::endl;
+//            std::cout << "Found new contour properties: " << contPropCurrFrame.size() << std::endl;
+//            std::cout << "Number of tracking Objects: " << trackingObjects.size() << std::endl;
             for (int t = 0; t < contPropCurrFrame.size(); t++) {
                 trackingObjects[trackId] = boost::circular_buffer<ContourProperties>(_numPastFrames);
                 trackingObjects[trackId].push_front(contPropCurrFrame[0]);
@@ -99,14 +100,20 @@ namespace ImFusion {
 
             cv::Mat annotations = cv::Mat::zeros(image.size(), CV_8UC1);
 
-            if(trackingObjects.size() != 0) {
+            if (trackingObjects.size() != 0) {
                 for (auto it = trackingObjects.begin(); it != trackingObjects.end();) {
                     int numOccurences = count_if(it->second.begin(), it->second.end(),
                                                  [](const ContourProperties &cp) { return !cp.isDummyValue(); });
                     if (numOccurences > _minOccurence * _numPastFrames) {
-                        auto ref = it->second.front();
+                        double m_radius = 0;
+                        int smooth_it = 3;
+                        for (auto it_inner = it->second.begin();
+                             it_inner != it->second.begin() + smooth_it; it_inner++) {
+                            m_radius += it_inner->getRadius();
+                        }
+                        m_radius = m_radius / smooth_it;
                         //probably mean of radius is good
-                        cv::circle(annotations, ref.getCenter(), ref.getRadius(), 255, -1);
+                        cv::circle(annotations, it->second.front().getCenter(), m_radius, 255, -1);
                         ++it;
                     } else {
                         //clean up tracking objects if this object has not been seen recently
@@ -121,6 +128,13 @@ namespace ImFusion {
             cv::imshow("contImage", contImage);
             cv::imshow("dopplerImage", image);
             cv::imshow("annotationImage", annotations);
+            objectDetected.push_back(!trackingObjects.empty());
+            if (objectDetected.size() > 10 &&
+                std::count(objectDetected.begin(), objectDetected.end(), true) > _numPastFrames * _minOccurence) {
+                emit(foundDoppler());
+            } else {
+                emit(lostDoppler());
+            }
 
 
 //
@@ -198,7 +212,7 @@ namespace ImFusion {
         void Tracker::cleanup() {
             //do cleanup if necessary
 
-            m_thread->quit();
+//            m_thread->quit();
         }
 
     }

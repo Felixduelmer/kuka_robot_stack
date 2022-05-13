@@ -124,6 +124,11 @@ bool ControlModeService::setPositionControlMode() {
   return callService();
 }
 
+ bool ControlModeService::setCartesianVelocity(const iiwa_msgs::CartesianQuantity& max_cartesian_velocity){
+  config_.request.limits.max_cartesian_velocity = max_cartesian_velocity;
+  return callService();
+}
+
 bool ControlModeService::setJointImpedanceMode(const iiwa_msgs::JointQuantity& joint_stiffnes,
                                                const iiwa_msgs::JointQuantity& joint_damping) {
   initJointImpedanceMode(joint_stiffnes, joint_damping);

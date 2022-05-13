@@ -8,10 +8,7 @@
 
 namespace ImFusion {
     namespace ROS_RoboticVessel {
-        LiveSegmentationStream::LiveSegmentationStream(ImageStream *imgStream) : m_inStream(
-                imgStream) {
-//            qRegisterMetaType<cv::Mat>("cvMat");
-            m_inStream->addListener(this);
+        LiveSegmentationStream::LiveSegmentationStream() {
             try {
                 model = torch::jit::load("/home/robotics-verse/projects/felix/traced_vesnet_model.pt");
                 model.to(at::kCUDA);
@@ -19,14 +16,6 @@ namespace ImFusion {
             } catch (...) {
                 std::cout << "encountered an error loading the model!" << std::endl;
             }
-            tracker = new Tracker();
-            bool success = connect(this, &LiveSegmentationStream::newDopplerImage, tracker,
-                    &Tracker::doppler_tracker);
-            Q_ASSERT(success);
-        }
-
-        LiveSegmentationStream::LiveSegmentationStream() {
-
         }
 
         void LiveSegmentationStream::onStreamData(const StreamData &streamData) {
@@ -164,6 +153,11 @@ namespace ImFusion {
 
         std::string LiveSegmentationStream::uuid() {
             return std::__cxx11::string("dummy id");
+        }
+
+        void LiveSegmentationStream::addInputStream(ImageStream* imgStream) {
+            m_inStream = imgStream;
+            m_inStream->addListener(this);
         }
 
 

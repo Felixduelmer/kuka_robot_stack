@@ -20,14 +20,14 @@
 namespace ImFusion {
     namespace ROS_RoboticVessel {
 
-        class LiveSegmentationStream : public QObject , public ImageStream, public StreamListener{
-            Q_OBJECT
+        class LiveSegmentationStream : public QObject, public ImageStream, public StreamListener {
+        Q_OBJECT
         public:
-            explicit LiveSegmentationStream(ImageStream *imgStream);
-
             LiveSegmentationStream();
 
             ~LiveSegmentationStream() override { m_inStream->removeListener(this); }
+
+            void addInputStream(ImageStream *imgStream);
 
             bool open() override;
 
@@ -59,7 +59,6 @@ namespace ImFusion {
             torch::jit::script::Module model;
             std::vector<torch::jit::IValue> inputs;
             c10::List<torch::Tensor> state;
-            Tracker *tracker;
         };
 
 

@@ -63,6 +63,9 @@
 //#include "robotic_vessel/RobotControl.h"
 #include "robotic_vessel/sweep_rec_and_comp.h"
 #include "RobotControl.h"
+#include "robotic_vessel/tracker.h"
+#include "robotic_vessel/vessel_segmentation_listener.h"
+#include "vessel_segmentation_listener.h"
 
 class Ui_Controller;
 Q_DECLARE_METATYPE(cv::Mat)
@@ -116,7 +119,9 @@ namespace ImFusion {
 //      RobotControl *m_robot_control{nullptr};
             SweepRecAndComp *sweepRecAndComp;
             ImageStream *imageStream;
-//            RobotControl *robControl;
+            RobotControl *robControl;
+            Tracker *tracker;
+            LiveSegmentationStream* liveSegmentationStream;
         };
 
     } // namespace ROS_RoboticVessel

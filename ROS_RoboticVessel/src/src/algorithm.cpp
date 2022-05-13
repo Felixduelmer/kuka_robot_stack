@@ -60,7 +60,7 @@ namespace ImFusion {
 //            imageStream->open();
 //            imageStream->start();
 //            robStream = new FakeTrackingStream();
-////            usStream = static_cast<ImageStream *>(main->dataModel()->get("pLiveSegmentationStream"));
+////            usStream = static_cast<ImageStream *>(main->dataModel()->get("liveSegmentationStream"));
 //            robStream->open();
 //            robStream->start();
 //            std::vector<Stream *> vec;

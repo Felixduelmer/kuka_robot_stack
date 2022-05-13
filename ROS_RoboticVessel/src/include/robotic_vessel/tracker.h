@@ -19,6 +19,10 @@ namespace ImFusion {
 
             ~Tracker();
 
+        signals:
+            void lostDoppler();
+            void foundDoppler();
+
         public slots:
 
             void doppler_tracker(cv::Mat image);
@@ -28,8 +32,6 @@ namespace ImFusion {
             void cleanup();
 
         private:
-            std::unique_ptr<QThread> m_thread;
-            std::map<int, boost::circular_buffer<ContourProperties>> trackingObjects;
             int numPast = 15;
             int occ = 3;
             int dista = 50;
@@ -37,6 +39,9 @@ namespace ImFusion {
             int* minOccurence = &occ;
             int* maxDistance = &dista;
             int trackId = 0;
+//            std::unique_ptr<QThread> m_thread;
+            std::map<int, boost::circular_buffer<ContourProperties>> trackingObjects;
+            boost::circular_buffer<bool> objectDetected = boost::circular_buffer<bool>(numPast);
         };
     }
 }

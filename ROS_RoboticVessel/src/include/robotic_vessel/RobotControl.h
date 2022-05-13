@@ -22,6 +22,7 @@
 
 #include <Eigen/Dense>
 #include <QObject>
+#include <QTimer>
 #include <string>
 #include <vector>
 #include <QVector>
@@ -39,7 +40,6 @@
 #include <geometry_msgs/Point32.h>
 #include <std_msgs/Bool.h>
 #include <sensor_msgs/Image.h>
-#include <ImFusion/GUI/MainWindowBase.h>
 
 #define PI 3.14159265358979323846
 #define FP 0.051264
@@ -55,6 +55,11 @@ const int FAN_MOTION_STYPE_STEP = 1;
 const int ROTATION_X = 0;
 const int ROTATION_Y = 1;
 
+// Felix
+const int NO_TRACKED_MOTION = 0;
+const int TRAJECTORY_MOTION = 1;
+const int FAN_MOTION = 2;
+
 //vision control
 const int ON_CURRENT_POSE = -1;
 const int ON_INITIAL_POSE = 0;
@@ -66,7 +71,7 @@ namespace ImFusion {
         class RobotControl : public QObject {
         Q_OBJECT
         public:
-            explicit RobotControl(MainWindowBase *mainWindowBase);
+            RobotControl();
 
             ~RobotControl();
 
@@ -75,16 +80,24 @@ namespace ImFusion {
              * @param [in] probe_name - the name of the ultrasound probe being used. The respective calibration will be loaded
              * from from IFLUSCalibration file.
              */
-            void connect(const std::string &probe_name);
+            void connectRobot(const std::string &probe_name);
 
             void disconnect();
 
             //Felix
-            void addPointConfiguration(const geometry_msgs::PoseStamped& pose) {   manual_traj_points_.push_back  (pose); }
-            void deletePointConfigurations() {manual_traj_points_.clear();}
+            void addPointConfiguration(const Eigen::Matrix4d &pose) { manualTrajPoints.push_back(pose); }
+
+            void deletePointConfigurations() { manualTrajPoints.clear(); }
+
             void executeTrajectory();
+
             void onMoveToNewPoint();
+
             void FinishedMoveToNewPointCallback();
+
+            void performFanMotion();
+
+            void RotateAroundTCP(double fOffsetAngle, int nRotationAxis, bool callBack);
 
             inline bool isRobotConnected() { return is_robot_connected_; }
 
@@ -258,6 +271,14 @@ namespace ImFusion {
 
             void robotDisconnected();
 
+        public slots:
+
+            void lostDopplerSignal();
+
+            void foundDopplerSignal();
+
+            void customPoseCallback();
+
         private:
             void poseCallback(const iiwa_msgs::CartesianPose &pose);
 
@@ -315,12 +336,18 @@ namespace ImFusion {
             Data *m_cepha_stream;
             Data *m_robot_stream;
             bool isStopped = false;
-            MainWindowBase *m_main{nullptr};
 
-            std::vector<geometry_msgs::PoseStamped> manual_traj_points_{};
-            int m_nTrajPoints{0};
-            int n_poses{0};
+            std::vector<Eigen::Matrix4d> manualTrajPoints{};
+            std::vector<Eigen::Quaterniond> qManualTrajPoints{};
+            int currentTargetPoint{0};
             geometry_msgs::PoseStamped start_pose{};
+            bool doppler_found = false;
+            int fanIter = 0;
+            int motionState = NO_TRACKED_MOTION;
+            bool blockFanMotion = false;
+            Eigen::Matrix4d lastPose = Eigen::Matrix4d::Identity();
+            int customPoseCallbackIterator = 0;
+            std::vector<double> offsetArr{0, 0, 0, 0, 0};
 
             // the pixel height and width, this is calculated by 55mm depth and 37.5 mm width image
             float m_pixel_height = 0.076f; // in mm
