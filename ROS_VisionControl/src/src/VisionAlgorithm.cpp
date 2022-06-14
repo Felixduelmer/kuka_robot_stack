@@ -19,10 +19,16 @@ PluginAlgorithm::PluginAlgorithm() {
 //      0, 1, 0, 51.2,
 //      0, 0, 0, 1;
 
-  probe_rotation_.block<4, 4>(0, 0) << 0, 0, 1, 0,
-      1, 0, 0, 0,
-      0, 1, 0, 29,
+  // probe_rotation_.block<4, 4>(0, 0) << 0, 0, 1, 0,
+  //     1, 0, 0, 0,
+  //     0, 1, 0, 29,
+  //     0, 0, 0, 1;
+
+    probe_rotation_.block<4, 4>(0, 0) << 0, 0, -1, 0,
+      -1, 0, 0, 0,
+      0, 1, 0, 22.5,
       0, 0, 0, 1;
+
 
   m_scanPointPoses.resize(0);
   m_confiMapConvex = new ConfidentMapConvex();

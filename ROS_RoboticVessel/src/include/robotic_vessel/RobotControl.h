@@ -91,11 +91,11 @@ namespace ImFusion {
 
             void executeTrajectory();
 
+            void reExecuteTrajectory();
+
             void onMoveToNewPoint();
 
             void FinishedMoveToNewPointCallback();
-
-            void performFanMotion();
 
             void RotateAroundTCP(double fOffsetAngle, int nRotationAxis, bool callBack);
 
@@ -240,7 +240,6 @@ namespace ImFusion {
              */
             void loadCalibrationFromFile(const std::string &file_name, const std::string &probe);
 
-
             void onGotoPose(const Eigen::Matrix4d &pose, bool callback = true);
 
             void onStepGotoPose(const Eigen::Matrix4d &pose, bool callback = true);
@@ -278,6 +277,11 @@ namespace ImFusion {
             void foundDopplerSignal();
 
             void customPoseCallback();
+
+            void removeFlag();
+
+            void performFanMotion();
+            double calculateDistance(double fOffsetAngle, int nRotationAxis);
 
         private:
             void poseCallback(const iiwa_msgs::CartesianPose &pose);
@@ -338,6 +342,7 @@ namespace ImFusion {
             bool isStopped = false;
 
             std::vector<Eigen::Matrix4d> manualTrajPoints{};
+            std::vector<Eigen::Matrix4d> fanTrajPoints{};
             std::vector<Eigen::Quaterniond> qManualTrajPoints{};
             int currentTargetPoint{0};
             geometry_msgs::PoseStamped start_pose{};
@@ -348,6 +353,8 @@ namespace ImFusion {
             Eigen::Matrix4d lastPose = Eigen::Matrix4d::Identity();
             int customPoseCallbackIterator = 0;
             std::vector<double> offsetArr{0, 0, 0, 0, 0};
+            double backToOrigDegree{0};
+            QTimer *timer;
 
             // the pixel height and width, this is calculated by 55mm depth and 37.5 mm width image
             float m_pixel_height = 0.076f; // in mm

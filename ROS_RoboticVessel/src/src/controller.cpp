@@ -27,6 +27,7 @@
 
 
 const bool useDummyData = false;
+const bool performSegmentationAndCompound = true;
 
 namespace ImFusion {
     namespace ROS_RoboticVessel {
@@ -101,9 +102,10 @@ namespace ImFusion {
         }
 
         void PluginController::onStartImpedanceControl() {
-            if (robControl->isRobotConnected()) {
-                robControl->performFanMotion();
-            }
+//            if (robControl->isRobotConnected()) {
+//                robControl->reExecuteTrajectory();
+//            }
+            robControl->performFanMotion();
         }
 
 
@@ -114,7 +116,8 @@ namespace ImFusion {
 
         void PluginController::onStartSegmentationClicked() {
             if (useDummyData) {
-                ImFusionFile file("/data1/volume1/data/felix_data/sweeps_imfusion/patient_2/Felix-02.imf");
+                ImFusionFile file(
+                        "/data1/volume1/data/felix_data/results_sweeps/original_sweep_31_05_12_33_20.imf");
                 file.open(0);
 
                 DataList dataList;
@@ -130,7 +133,6 @@ namespace ImFusion {
             imageStream->open();
             imageStream->start();
         }
-
 
     }  // namespace ROS_RoboticVessel
 }  // namespace ImFusion
