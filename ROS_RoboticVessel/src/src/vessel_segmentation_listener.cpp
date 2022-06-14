@@ -10,7 +10,7 @@ namespace ImFusion {
     namespace ROS_RoboticVessel {
         LiveSegmentationStream::LiveSegmentationStream() {
             try {
-                model = torch::jit::load("/home/robotics-verse/projects/felix/traced_vesnet_model.pt");
+                model = torch::jit::load("/home/robotics-verse/projects/felix/traced_butterfly_model.pt");
                 model.to(at::kCUDA);
                 initState();
             } catch (...) {
@@ -69,7 +69,7 @@ namespace ImFusion {
             MemImage *outImg = MemImage::create(Image::UBYTE, nWidth, nHeight, 1, 1);
             memcpy(outImg->data(), cvOutputResized.data, cvOutputResized.rows * cvOutputResized.cols * sizeof(uchar));
 
-            outImg->setSpacing(51.3 / nWidth, 45.0 / nHeight, 1);
+            outImg->setSpacing(31.8 / nWidth, 45.0 / nHeight, 1);
             ImageStreamData oisd(this);
             oisd.setTimestampArrival(imgData->timestampArrival());
             oisd.setTimestampDevice(imgData->timestampDevice());
@@ -125,10 +125,9 @@ namespace ImFusion {
         }
 
         void LiveSegmentationStream::initState() {
-            state.push_back(torch::zeros({1, 8, 320, 320}).to(at::kCUDA));
-            state.push_back(torch::zeros({1, 16, 160, 160}).to(at::kCUDA));
-            state.push_back(torch::zeros({1, 32, 80, 80}).to(at::kCUDA));
-            state.push_back(torch::zeros({1, 64, 40, 40}).to(at::kCUDA));
+            state.push_back(torch::zeros({1, 64, 20, 20}).to(at::kCUDA));
+            state.push_back(torch::zeros({1, 64, 20, 20}).to(at::kCUDA));
+            state.push_back(torch::zeros({1, 128, 20, 20}).to(at::kCUDA));
         }
 
         bool LiveSegmentationStream::open() {

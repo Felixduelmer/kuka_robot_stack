@@ -50,6 +50,8 @@ namespace ImFusion {
             std::vector<Stream *> vec;
             vec.push_back((usStream));
             vec.push_back((robStream));
+            ImageStream * USStream = static_cast<ImageStream *>(m_main->dataModel()->get("Ultrasound Stream"));
+            vec.push_back((USStream));
 
             sweepRecorderAlgorithm = new USSweepRecorderAlgorithm(vec);
             sweepRecorderAlgorithm->start();
@@ -75,18 +77,22 @@ namespace ImFusion {
             sweepRecorderAlgorithm->output(datalist);
 //            sweepRecorderAlgorithm->start();
             UltrasoundSweep *usSweep = static_cast<UltrasoundSweep *>(datalist.getItem(0));
+            UltrasoundSweep *usSweepOriginal = static_cast<UltrasoundSweep *>(datalist.getItem(1));
 
             // necessary???
-            //   usSweep->tracking()->setTemporalOffset(146);
+//               usSweep->tracking()->setTemporalOffset(146);
             Selection sel;
+            Selection sel2;
 
             sel.setAll(usSweep->size());
+            sel.setAll(usSweepOriginal->size());
             usSweep->setSelection(sel);
+            usSweepOriginal->setSelection(sel2);
 //            sel.setAll(ringBuffer->size());
 //            ringBuffer->setSelection(sel);
 //             usSweep->tracking()->setTemporalOffset(m_robotCtrlUS->getTemporalCalibration());
             // setConvexGeometry(usSweep);
-            auto *sc2 = new GlSweepCompounding(*ringBuffer);
+            auto *sc2 = new GlSweepCompounding(*usSweep);
             sc2->setMode(0); // GPU    4 is CPU Maximum
             sc2->compute();  // We do the volume compounding
             DataList datalist3;
@@ -95,15 +101,17 @@ namespace ImFusion {
             m_main->dataModel()->add(datalist3.getItem(0), "Partial Volume ");
 //            m_main->dataModel()->add(usSweep, "Partial Sweep ");
 
-//            if (m_exportSweeps) {
-//                auto sis = static_cast<SharedImageSet *>(datalist3.getItem(0));
-//                sis->get()->sync();
-//                auto str = getDayAndTime();
-//                BackgroundExporter *sweepExporter = new BackgroundExporter();
-//                sweepExporter->save(usSweep, "/home/javi/Data/VienaRoboticSpine/sweep_" + str + ".imf");
-//                BackgroundExporter *volExporter = new BackgroundExporter();
-//                volExporter->save(sis, "/home/javi/Data/VienaRoboticSpine/vol_" + str + ".imf");
-//            }
+            if (m_exportSweeps) {
+                auto sis = static_cast<SharedImageSet *>(datalist3.getItem(0));
+                sis->get()->sync();
+                auto str = getDayAndTime();
+                BackgroundExporter *sweepExporter = new BackgroundExporter();
+                sweepExporter->save(usSweep, "/data1/volume1/data/felix_data/results_sweeps/sweep_" + str + ".imf");
+                BackgroundExporter *originalSweepExporter = new BackgroundExporter();
+                originalSweepExporter->save(usSweepOriginal, "/data1/volume1/data/felix_data/results_sweeps/original_sweep_" + str + ".imf");
+                BackgroundExporter *volExporter = new BackgroundExporter();
+                volExporter->save(sis, "/data1/volume1/data/felix_data/results_sweeps/vol_" + str + ".imf");
+            }
 
             delete sc2;
 //            if (numberOfPartialSweeps > 2) {

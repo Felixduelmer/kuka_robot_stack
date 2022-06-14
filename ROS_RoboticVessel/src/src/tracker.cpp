@@ -55,7 +55,7 @@ namespace ImFusion {
             for (auto &contour: contours) {
                 cv::approxPolyDP(contour, contours_poly, 10, true);
                 cv::minEnclosingCircle(contours_poly, center, radius);
-                if (radius < 5) {
+                if (radius < 15) {
                     continue;
                 }
                 contPropCurrFrame.push_back(ContourProperties(center, radius));
@@ -131,8 +131,10 @@ namespace ImFusion {
             objectDetected.push_back(!trackingObjects.empty());
             if (objectDetected.size() > 10 &&
                 std::count(objectDetected.begin(), objectDetected.end(), true) > _numPastFrames * _minOccurence) {
+                std::cout << "found doppler" << std::endl;
                 emit(foundDoppler());
             } else {
+                std::cout << "lost doppler" << std::endl;
                 emit(lostDoppler());
             }
 

@@ -35,7 +35,7 @@ namespace ImFusion {
             MainWindowBase *m_main{nullptr};
             QTimer *timer;
             bool m_useLiveData = true;
-            bool m_exportSweeps = false;
+            bool m_exportSweeps = true;
             int numberOfPartialSweeps{0};
             DataList m_dataList;
             UltrasoundSweepRingBuffer *ringBuffer;
