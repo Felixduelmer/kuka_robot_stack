@@ -20,7 +20,6 @@
 #include <ImFusion/GL/IntensityMask.h>
 
 
-
 #define ON_NOTREADY -1
 #define ON_READYTOSTART 0
 #define ON_FINAL 1
@@ -29,7 +28,7 @@ namespace ImFusion {
     namespace ROS_RoboticVessel {
 
         SweepRecAndComp::SweepRecAndComp(MainWindowBase *mainWindowBase)
-                : m_main(mainWindowBase ) {
+                : m_main(mainWindowBase) {
         }
 
         void SweepRecAndComp::startSweepRecording() {
@@ -50,10 +49,12 @@ namespace ImFusion {
             std::vector<Stream *> vec;
             vec.push_back((usStream));
             vec.push_back((robStream));
-            ImageStream * USStream = static_cast<ImageStream *>(m_main->dataModel()->get("Ultrasound Stream"));
+            ImageStream *USStream = static_cast<ImageStream *>(m_main->dataModel()->get("Ultrasound Stream"));
             vec.push_back((USStream));
 
             sweepRecorderAlgorithm = new USSweepRecorderAlgorithm(vec);
+            sweepRecorderAlgorithm->setTemporalOffset(0.63);
+            sweepRecorderAlgorithm->setTrackingQualityThreshold(0.1);
             sweepRecorderAlgorithm->start();
             Properties ctrlRecorder;
             ctrlRecorder.addSubProperties("Controller");
@@ -80,7 +81,6 @@ namespace ImFusion {
             UltrasoundSweep *usSweepOriginal = static_cast<UltrasoundSweep *>(datalist.getItem(1));
 
             // necessary???
-//               usSweep->tracking()->setTemporalOffset(146);
             Selection sel;
             Selection sel2;
 
@@ -94,9 +94,15 @@ namespace ImFusion {
             // setConvexGeometry(usSweep);
             auto *sc2 = new GlSweepCompounding(*usSweep);
             sc2->setMode(0); // GPU    4 is CPU Maximum
+            std::chrono::steady_clock::time_point compoundingStarted = std::chrono::steady_clock::now();
             sc2->compute();  // We do the volume compounding
+            std::chrono::steady_clock::time_point compoundingEnded = std::chrono::steady_clock::now();
             DataList datalist3;
             sc2->output(datalist3);
+
+            std::cout << "Compounding took = "
+                      << std::chrono::duration_cast<std::chrono::milliseconds>(compoundingEnded - compoundingStarted).count()
+                      << "[µs]" << std::endl;
 
             m_main->dataModel()->add(datalist3.getItem(0), "Partial Volume ");
 //            m_main->dataModel()->add(usSweep, "Partial Sweep ");
@@ -108,7 +114,9 @@ namespace ImFusion {
                 BackgroundExporter *sweepExporter = new BackgroundExporter();
                 sweepExporter->save(usSweep, "/data1/volume1/data/felix_data/results_sweeps/sweep_" + str + ".imf");
                 BackgroundExporter *originalSweepExporter = new BackgroundExporter();
-                originalSweepExporter->save(usSweepOriginal, "/data1/volume1/data/felix_data/results_sweeps/original_sweep_" + str + ".imf");
+                originalSweepExporter->save(usSweepOriginal,
+                                            "/data1/volume1/data/felix_data/results_sweeps/original_sweep_" + str +
+                                            ".imf");
                 BackgroundExporter *volExporter = new BackgroundExporter();
                 volExporter->save(sis, "/data1/volume1/data/felix_data/results_sweeps/vol_" + str + ".imf");
             }

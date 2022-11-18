@@ -281,6 +281,9 @@ namespace ImFusion {
             void removeFlag();
 
             void performFanMotion();
+
+            void performFanMotionTest();
+
             double calculateDistance(double fOffsetAngle, int nRotationAxis);
 
         private:
@@ -343,11 +346,16 @@ namespace ImFusion {
 
             std::vector<Eigen::Matrix4d> manualTrajPoints{};
             std::vector<Eigen::Matrix4d> fanTrajPoints{};
+            Eigen::Matrix4d fanStartPosinMM = Eigen::Matrix4d::Identity();
             std::vector<Eigen::Quaterniond> qManualTrajPoints{};
+            int fanMotionCounter{0};
+            std::chrono::steady_clock::time_point scanStarted;
+            std::chrono::steady_clock::time_point scanEnded;
             int currentTargetPoint{0};
             geometry_msgs::PoseStamped start_pose{};
             bool doppler_found = false;
             int fanIter = 0;
+            std::vector<int> fanIterStorage{};
             int motionState = NO_TRACKED_MOTION;
             bool blockFanMotion = false;
             Eigen::Matrix4d lastPose = Eigen::Matrix4d::Identity();

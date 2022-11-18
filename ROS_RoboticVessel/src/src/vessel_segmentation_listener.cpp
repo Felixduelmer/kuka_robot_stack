@@ -4,6 +4,7 @@
 #include <ImFusion/Base/MemImage.h>
 #include <chrono>
 #include <ImFusion/Stream/TrackingStreamData.h>
+#include <tuple>
 
 
 namespace ImFusion {
@@ -22,7 +23,9 @@ namespace ImFusion {
             std::chrono::steady_clock::time_point receivedImage = std::chrono::steady_clock::now();
             auto *imgData = dynamic_cast<const ImageStreamData *>(&streamData);
             std::unique_ptr<MemImage> image = imgData->images().front()->clone2();
-            at::Tensor tensor = preProcessData(std::move(image));
+            cv::Mat us_final, doppler_final;
+            std::tie(us_final, doppler_final) = preProcessData(std::move(image));
+            at::Tensor tensor = toTensor(us_final, doppler_final);
 //            std::cout << "max image value: " << torch::max(tensor) << std::endl;
             inputs.clear();
             tensor = tensor.toType(torch::kFloat);
@@ -53,15 +56,17 @@ namespace ImFusion {
             cv::Mat cvOutputImage = cv::Mat(cv::Size(320, 320), CV_8U, output_image_tensor.data_ptr<uchar>());
 //            cv::imshow("segImage", cvOutputImage);
             std::chrono::steady_clock::time_point receivedImageEnd = std::chrono::steady_clock::now();
-//            std::cout << "Model took = "
-//                      << std::chrono::duration_cast<std::chrono::milliseconds>(end_model - begin_model).count()
-//                      << "[µs]" << std::endl;
-//            std::cout << "Whole step took = "
-//                      << std::chrono::duration_cast<std::chrono::milliseconds>(receivedImageEnd - receivedImage).count()
-//                      << "[µs]" << std::endl;
+            std::cout << "Model took = "
+                      << std::chrono::duration_cast<std::chrono::milliseconds>(end_model - begin_model).count()
+                      << "[µs]" << std::endl;
+            std::cout << "Whole step took = "
+                      << std::chrono::duration_cast<std::chrono::milliseconds>(receivedImageEnd - receivedImage).count()
+                      << "[µs]" << std::endl;
 
-            int nWidth = 501;
-            int nHeight = 699;
+            emit newDopplerImage(doppler_final.clone(), cvOutputImage.clone());
+
+            int nWidth = 497;
+            int nHeight = 733;
             cv::Mat cvOutputResized(nHeight, nWidth, CV_8UC1, cv::Scalar(255));
             cv::resize(cvOutputImage, cvOutputResized, cvOutputResized.size(), 0, 0);
 
@@ -69,7 +74,7 @@ namespace ImFusion {
             MemImage *outImg = MemImage::create(Image::UBYTE, nWidth, nHeight, 1, 1);
             memcpy(outImg->data(), cvOutputResized.data, cvOutputResized.rows * cvOutputResized.cols * sizeof(uchar));
 
-            outImg->setSpacing(31.8 / nWidth, 45.0 / nHeight, 1);
+            outImg->setSpacing(30.7 / nWidth, 45.0 / nHeight, 1);
             ImageStreamData oisd(this);
             oisd.setTimestampArrival(imgData->timestampArrival());
             oisd.setTimestampDevice(imgData->timestampDevice());
@@ -78,14 +83,14 @@ namespace ImFusion {
             updateListenersData(oisd);
         }
 
-        at::Tensor LiveSegmentationStream::preProcessData(std::unique_ptr<MemImage> memImage) {
+        std::tuple<cv::Mat, cv::Mat> LiveSegmentationStream::preProcessData(std::unique_ptr<MemImage> memImage) {
             //copy to cv mat image
             cv::Mat cv_imgIn(memImage->height(), memImage->width(), CV_8UC3);  //uchar
             memcpy(cv_imgIn.data, memImage->data(), memImage->byteSize());
 
             //cut image
-            auto us_image = cv_imgIn(cv::Rect(472, 136, 501, 699));
-            auto doppler_image = cv_imgIn(cv::Rect(1004, 136, 501, 699));
+            auto us_image = cv_imgIn(cv::Rect(482, 120, 497, 733));
+            auto doppler_image = cv_imgIn(cv::Rect(1014, 120, 497, 733));
             //resize image
             cv::Mat doppler_image_resized(320, 320, CV_8UC1, cv::Scalar(255));
             cv::Mat us_image_resized(320, 320, CV_8UC1, cv::Scalar(255));
@@ -105,10 +110,8 @@ namespace ImFusion {
 
 //            cv::imshow("usImage", us_final);
 //            cv::imshow("dopplerImage", doppler_final);
-            emit newDopplerImage(doppler_final.clone());
 
-            return toTensor(us_final, doppler_final);
-
+            return std::make_tuple(us_final, doppler_final);
         }
 
         at::Tensor LiveSegmentationStream::toTensor(const cv::Mat &img_us, const cv::Mat &img_doppler) {

@@ -25,7 +25,7 @@ namespace ImFusion {
 
         public slots:
 
-            void doppler_tracker(cv::Mat image);
+            void doppler_tracker(cv::Mat doppler_image, cv::Mat seg_image);
 
         private slots:
 
@@ -33,15 +33,14 @@ namespace ImFusion {
 
         private:
             int numPast = 15;
-            int occ = 3;
-            int dista = 50;
+            int occ = 2;
+            int dista = 30;
             int* numPastFrames = &numPast;
             int* minOccurence = &occ;
             int* maxDistance = &dista;
             int trackId = 0;
 //            std::unique_ptr<QThread> m_thread;
             std::map<int, boost::circular_buffer<ContourProperties>> trackingObjects;
-            boost::circular_buffer<bool> objectDetected = boost::circular_buffer<bool>(numPast);
         };
     }
 }

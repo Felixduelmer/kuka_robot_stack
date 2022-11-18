@@ -102,10 +102,10 @@ namespace ImFusion {
         }
 
         void PluginController::onStartImpedanceControl() {
-//            if (robControl->isRobotConnected()) {
-//                robControl->reExecuteTrajectory();
-//            }
-            robControl->performFanMotion();
+            if (robControl->isRobotConnected()) {
+                robControl->reExecuteTrajectory();
+            }
+//            robControl->performFanMotion();
         }
 
 
@@ -117,7 +117,7 @@ namespace ImFusion {
         void PluginController::onStartSegmentationClicked() {
             if (useDummyData) {
                 ImFusionFile file(
-                        "/data1/volume1/data/felix_data/results_sweeps/original_sweep_31_05_12_33_20.imf");
+                        "/data1/volume1/data/felix_data/results_sweeps/original_sweep_15_06_19_27_12.imf");
                 file.open(0);
 
                 DataList dataList;

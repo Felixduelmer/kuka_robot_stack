@@ -21,8 +21,8 @@ namespace ImFusion {
             onInitROS();
 
             probe_rotation_.block<4, 4>(0, 0) << 0, 0, -1, 0,
-                    -1, 0, 0, 15.6,
-                    0, 1, 0, 0,
+                    -1, 0, 0, 0,
+                    0, 1, 0, 22.5,
                     0, 0, 0, 1;
             connect(this, &RobotControl::poseChanged, this, &RobotControl::customPoseCallback);
             timer = new QTimer(this);
@@ -36,6 +36,7 @@ namespace ImFusion {
         //execute a movement along defined points
         void RobotControl::executeTrajectory() {
             LOG_INFO("Start to execute Trajectory");
+            scanStarted = std::chrono::steady_clock::now();
             motionState = TRAJECTORY_MOTION;
             std::transform(manualTrajPoints.begin(), manualTrajPoints.end(), std::back_inserter(qManualTrajPoints),
                            [](Eigen::Matrix4d mat) { return Eigen::Quaterniond{mat.block<3, 3>(0, 0)}; });
@@ -51,11 +52,14 @@ namespace ImFusion {
             blockFanMotion = true;
             motionState = TRAJECTORY_MOTION;
             //return the block
-            std::for_each(manualTrajPoints.begin(), manualTrajPoints.end(),
-                          [](Eigen::Matrix4d mat) {
-                              return mat.block<3, 3>(0, 0) = Eigen::Quaterniond{
-                                      mat.block<3, 3>(0, 0)}.toRotationMatrix();
-                          });
+            for (int i = 0; i < manualTrajPoints.size(); i++) {
+                manualTrajPoints[i].block<3, 3>(0, 0) = qManualTrajPoints[i].toRotationMatrix();
+            }
+            applyDesiredForce(iiwa_msgs::DOF::Z, 1, 200);
+//            std::for_each(manualTrajPoints.begin(), manualTrajPoints.end(),
+//                          [](Eigen::Matrix4d mat) {
+//                              return mat.block<3, 3>(0, 0) = qManualTrajPoints[].toRotationMatrix();
+//                          });
             start_pose = getCurrentRobotPose();
             LOG_INFO("Number of points to go to: " + std::to_string(manualTrajPoints.size()));
             onMoveToNewPoint();
@@ -81,7 +85,21 @@ namespace ImFusion {
                     applyPositionControlMode();
                     executeCartesianCommand(start_pose.pose, true);
                     LOG_INFO("Going to home position");
+                    scanEnded = std::chrono::steady_clock::now();
+                    std::cout << "Full trajectory was: " << ((manualTrajPoints.front().block<3, 1>(0, 3) -
+                                                              manualTrajPoints.back().block<3, 1>(0, 3)).norm())
+                              << std::endl;
+                    std::cout << "Total Time for the scan was: "
+                              << std::chrono::duration_cast<std::chrono::milliseconds>(scanEnded - scanStarted).count()
+                              << "[ms]" << std::endl;
+                    std::cout << "In total the fan motion was initiated " << to_string(fanMotionCounter) << " times."
+                              << std::endl;
+                    std::cout << "The respective iterations that were needed are: ";
+                    for (int i: fanIterStorage)
+                        std::cout << to_string(i) << ' ';
+                    std::cout << std::endl;
                     emit reachedEndPoint();
+                    fanMotionCounter = 0;
                 }
             }
         }
@@ -179,7 +197,7 @@ namespace ImFusion {
                 tracking_instrument->quality = 1;
 //        auto image_center_pose = poseToEigenMat4(pose.poseStamped.pose, 1000) * probe_rotation_ * ultrasound_calibration_;
 
-                auto image_center_pose = poseToEigenMat4(pose.poseStamped.pose, 1000) * probe_rotation_;
+                Eigen::Matrix4d image_center_pose = poseToEigenMat4(pose.poseStamped.pose, 1000) * probe_rotation_;
 
                 tracking_instrument->matrix = image_center_pose;
 
@@ -239,6 +257,8 @@ namespace ImFusion {
                 geometry_msgs::PoseStamped ps;
                 ps.header.frame_id = "iiwa_link_0";
                 ps.pose = pose;
+
+                LOG_INFO(pose.position << std::endl);
 
                 if (linear == true) {
                     if (callback == nullptr) {
@@ -480,6 +500,7 @@ namespace ImFusion {
                     motionState = TRAJECTORY_MOTION;
                     applyDesiredForce(iiwa_msgs::DOF::Z, 1, 200);
                     onMoveToNewPoint();
+                    fanIterStorage.push_back(fanIter);
                     fanIter = 0;
                     std::cout << "START removed Flag" << std::endl;
                     QTimer::singleShot(3000, this, &RobotControl::removeFlag);
@@ -546,17 +567,17 @@ namespace ImFusion {
 
             if (callBack) {
                 fanTrajPoints.push_back(PoseRotateTCP);
+                motionState = FAN_MOTION;
                 executeCartesianCommand(PoseRotateTCP, true);
             } else {
                 executeCartesianCommand(eigenMat4ToPose(PoseRotateTCP), true);
-                sleep(2);
             }
-
         }
 
         void RobotControl::lostDopplerSignal() {
             if (motionState == TRAJECTORY_MOTION && currentTargetPoint != 0 && !blockFanMotion) {
                 LOG_INFO("Lost Doppler Signal");
+                fanMotionCounter++;
                 doppler_found = false;
                 performFanMotion();
             }
@@ -581,6 +602,7 @@ namespace ImFusion {
                                 motionState = TRAJECTORY_MOTION;
                                 applyDesiredForce(iiwa_msgs::DOF::Z, 1, 200);
                                 onMoveToNewPoint();
+                                fanIterStorage.push_back(fanIter);
                                 fanIter = 0;
                                 std::cout << "START removed Flag" << std::endl;
                                 QTimer::singleShot(3000, this, &RobotControl::removeFlag);

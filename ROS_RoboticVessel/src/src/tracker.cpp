@@ -21,7 +21,7 @@ namespace ImFusion {
         static void dummyCallback(int img, void *) {}
 
 
-        void Tracker::doppler_tracker(cv::Mat image) {
+        void Tracker::doppler_tracker(cv::Mat doppler_image, cv::Mat seg_image) {
 
             long _numPastFrames = *numPastFrames;
             float _minOccurence = (*minOccurence) / 10.0;
@@ -46,16 +46,19 @@ namespace ImFusion {
             std::vector<ContourProperties> contPropCurrFrame;
 
             //finding the contours in the doppler image
-            image = image.setTo(255, image > 10);
-            cv::findContours(image, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
+            cv::Mat mask = cv::Mat::zeros(doppler_image.size(), CV_8UC1);
+            mask(cv::Rect(10, 10, doppler_image.size().width - 20, doppler_image.size().height - 20)) = 1;
+            doppler_image = doppler_image.setTo(0, mask == 0);
+            doppler_image = doppler_image.setTo(255, doppler_image > 10);
+            cv::findContours(doppler_image, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
 
-            cv::Mat contImage = cv::Mat::zeros(image.size(), CV_8UC1);
+            cv::Mat contImage = cv::Mat::zeros(doppler_image.size(), CV_8UC1);
 
             //adding the center point and radius to a list;
             for (auto &contour: contours) {
                 cv::approxPolyDP(contour, contours_poly, 10, true);
                 cv::minEnclosingCircle(contours_poly, center, radius);
-                if (radius < 15) {
+                if (radius < 10) {
                     continue;
                 }
                 contPropCurrFrame.push_back(ContourProperties(center, radius));
@@ -98,8 +101,9 @@ namespace ImFusion {
                 trackId++;
             }
 
-            cv::Mat annotations = cv::Mat::zeros(image.size(), CV_8UC1);
+            cv::Mat annotations = cv::Mat::zeros(doppler_image.size(), CV_8UC1);
 
+            std::vector<cv::Point> centerPoints;
             if (trackingObjects.size() != 0) {
                 for (auto it = trackingObjects.begin(); it != trackingObjects.end();) {
                     int numOccurences = count_if(it->second.begin(), it->second.end(),
@@ -114,6 +118,7 @@ namespace ImFusion {
                         m_radius = m_radius / smooth_it;
                         //probably mean of radius is good
                         cv::circle(annotations, it->second.front().getCenter(), m_radius, 255, -1);
+                        centerPoints.push_back(it->second.front().getCenter());
                         ++it;
                     } else {
                         //clean up tracking objects if this object has not been seen recently
@@ -125,16 +130,29 @@ namespace ImFusion {
                     }
                 }
             }
-            cv::imshow("contImage", contImage);
-            cv::imshow("dopplerImage", image);
+//            cv::imshow("contImage", contImage);
+            cv::imshow("dopplerImage", doppler_image);
             cv::imshow("annotationImage", annotations);
-            objectDetected.push_back(!trackingObjects.empty());
-            if (objectDetected.size() > 10 &&
-                std::count(objectDetected.begin(), objectDetected.end(), true) > _numPastFrames * _minOccurence) {
-                std::cout << "found doppler" << std::endl;
+//            cv::Mat intersection;
+//            cv::bitwise_and(annotations, annotations, intersection, seg_image);
+//            float dice_score = float(2 * cv::countNonZero(intersection) + 1) /
+//                               float(cv::countNonZero(annotations) + cv::countNonZero(seg_image) + 1);
+            int sumInside = 0;
+            for (auto &cp: centerPoints) {
+                if (seg_image.at<u_int8_t>(cp) >= 1) {
+                    sumInside += 1;
+                }
+            }
+            float result = 0;
+            if (!centerPoints.empty()) {
+                result = float(sumInside) / float(centerPoints.size());
+            }
+//            std::cout << "Center Points inside:" << result << std::endl;
+            if (result > 0) {
+//                std::cout << "found continous doppler" << std::endl;
                 emit(foundDoppler());
             } else {
-                std::cout << "lost doppler" << std::endl;
+//                std::cout << "lost continous doppler" << std::endl;
                 emit(lostDoppler());
             }
 

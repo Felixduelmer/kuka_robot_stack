@@ -43,7 +43,7 @@ namespace ImFusion {
 
             void onStreamData(const StreamData &streamData) override;
 
-            at::Tensor preProcessData(std::unique_ptr<MemImage> memImage);
+            std::tuple<cv::Mat, cv::Mat> preProcessData(std::unique_ptr<MemImage> memImage);
 
             void initState();
 
@@ -51,7 +51,7 @@ namespace ImFusion {
 
         signals:
 
-            void newDopplerImage(cv::Mat image);
+            void newDopplerImage(cv::Mat dopplerImage, cv::Mat segImage);
 
 
         private:
