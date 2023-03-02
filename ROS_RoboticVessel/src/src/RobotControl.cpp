@@ -100,6 +100,7 @@ namespace ImFusion {
                     std::cout << std::endl;
                     emit reachedEndPoint();
                     fanMotionCounter = 0;
+                    fanIterStorage.clear();
                 }
             }
         }
