@@ -7,13 +7,13 @@
 #include <ImFusion/Stream/FakeImageStream.h>
 #include <ImFusion/Stream/PlaybackTrackingStream.h>
 #include <ImFusion/Stream/LiveTrackingStream.h>
-#include <ImFusion/US/FreehandUSWorkflowAlgorithm.h>
+#include <ImFusion/LiveUS/FreehandUSWorkflowAlgorithm.h>
 #include <iostream>
 #include <ImFusion/Base/DataModel.h>
 #include <ImFusion/GUI/MainWindowBase.h>
 #include <ImFusion/US/UltrasoundSweepRingBuffer.h>
-#include <ImFusion/US/USSweepRecorderAlgorithm.h>
-#include <ImFusion/US/USSweepRecorderController.h>
+#include <ImFusion/LiveUS/USSweepRecorderAlgorithm.h>
+#include <ImFusion/LiveUS/USSweepRecorderController.h>
 
 
 namespace ImFusion {

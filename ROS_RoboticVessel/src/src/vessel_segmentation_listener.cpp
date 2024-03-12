@@ -20,67 +20,67 @@ namespace ImFusion {
         }
 
         void LiveSegmentationStream::onStreamData(const StreamData &streamData) {
-            std::chrono::steady_clock::time_point receivedImage = std::chrono::steady_clock::now();
-            auto *imgData = dynamic_cast<const ImageStreamData *>(&streamData);
-            std::unique_ptr<MemImage> image = imgData->images().front()->clone2();
-            cv::Mat us_final, doppler_final;
-            std::tie(us_final, doppler_final) = preProcessData(std::move(image));
-            at::Tensor tensor = toTensor(us_final, doppler_final);
-//            std::cout << "max image value: " << torch::max(tensor) << std::endl;
-            inputs.clear();
-            tensor = tensor.toType(torch::kFloat);
-            inputs.push_back(tensor.to(at::kCUDA));
-            inputs.push_back(state);
-            c10::intrusive_ptr<c10::ivalue::Tuple> output;
-            std::chrono::steady_clock::time_point begin_model = std::chrono::steady_clock::now();
-            try {
-                output = model.forward(inputs).toTuple();
-            }
-            catch (std::exception &e) {
-                std::cout << e.what() << std::endl;
-                return;
-            }
-            std::chrono::steady_clock::time_point end_model = std::chrono::steady_clock::now();
-            auto output_image_tensor = output->elements()[0].toTensor();
-//            std::cout << torch::max(output_image_tensor) << std::endl;
-            output_image_tensor = output_image_tensor.squeeze().detach();
-            output_image_tensor = torch::round(output_image_tensor).mul(255).to(torch::kU8);
-            output_image_tensor = output_image_tensor.to(torch::kCPU);
+//             std::chrono::steady_clock::time_point receivedImage = std::chrono::steady_clock::now();
+//             auto *imgData = dynamic_cast<const ImageStreamData *>(&streamData);
+//             std::unique_ptr<MemImage> image = imgData->images().front()->clone2();
+//             cv::Mat us_final, doppler_final;
+//             std::tie(us_final, doppler_final) = preProcessData(std::move(image));
+//             at::Tensor tensor = toTensor(us_final, doppler_final);
+// //            std::cout << "max image value: " << torch::max(tensor) << std::endl;
+//             inputs.clear();
+//             tensor = tensor.toType(torch::kFloat);
+//             inputs.push_back(tensor.to(at::kCUDA));
+//             inputs.push_back(state);
+//             c10::intrusive_ptr<c10::ivalue::Tuple> output;
+//             std::chrono::steady_clock::time_point begin_model = std::chrono::steady_clock::now();
+//             try {
+//                 output = model.forward(inputs).toTuple();
+//             }
+//             catch (std::exception &e) {
+//                 std::cout << e.what() << std::endl;
+//                 return;
+//             }
+//             std::chrono::steady_clock::time_point end_model = std::chrono::steady_clock::now();
+//             auto output_image_tensor = output->elements()[0].toTensor();
+// //            std::cout << torch::max(output_image_tensor) << std::endl;
+//             output_image_tensor = output_image_tensor.squeeze().detach();
+//             output_image_tensor = torch::round(output_image_tensor).mul(255).to(torch::kU8);
+//             output_image_tensor = output_image_tensor.to(torch::kCPU);
 
-            auto newState = output->elements()[1].toList();
-            state.clear();
-            for (int i = 0; i < newState.size(); i++) {
-                state.push_back(newState.get(i).toTensor().detach());
-            }
+//             auto newState = output->elements()[1].toList();
+//             state.clear();
+//             for (int i = 0; i < newState.size(); i++) {
+//                 state.push_back(newState.get(i).toTensor().detach());
+//             }
 
-            cv::Mat cvOutputImage = cv::Mat(cv::Size(320, 320), CV_8U, output_image_tensor.data_ptr<uchar>());
-//            cv::imshow("segImage", cvOutputImage);
-            std::chrono::steady_clock::time_point receivedImageEnd = std::chrono::steady_clock::now();
-            std::cout << "Model took = "
-                      << std::chrono::duration_cast<std::chrono::milliseconds>(end_model - begin_model).count()
-                      << "[µs]" << std::endl;
-            std::cout << "Whole step took = "
-                      << std::chrono::duration_cast<std::chrono::milliseconds>(receivedImageEnd - receivedImage).count()
-                      << "[µs]" << std::endl;
+//             cv::Mat cvOutputImage = cv::Mat(cv::Size(320, 320), CV_8U, output_image_tensor.data_ptr<uchar>());
+// //            cv::imshow("segImage", cvOutputImage);
+//             std::chrono::steady_clock::time_point receivedImageEnd = std::chrono::steady_clock::now();
+//             std::cout << "Model took = "
+//                       << std::chrono::duration_cast<std::chrono::milliseconds>(end_model - begin_model).count()
+//                       << "[µs]" << std::endl;
+//             std::cout << "Whole step took = "
+//                       << std::chrono::duration_cast<std::chrono::milliseconds>(receivedImageEnd - receivedImage).count()
+//                       << "[µs]" << std::endl;
 
-            emit newDopplerImage(doppler_final.clone(), cvOutputImage.clone());
+//             emit newDopplerImage(doppler_final.clone(), cvOutputImage.clone());
 
-            int nWidth = 497;
-            int nHeight = 733;
-            cv::Mat cvOutputResized(nHeight, nWidth, CV_8UC1, cv::Scalar(255));
-            cv::resize(cvOutputImage, cvOutputResized, cvOutputResized.size(), 0, 0);
+//             int nWidth = 497;
+//             int nHeight = 733;
+//             cv::Mat cvOutputResized(nHeight, nWidth, CV_8UC1, cv::Scalar(255));
+//             cv::resize(cvOutputImage, cvOutputResized, cvOutputResized.size(), 0, 0);
 
-//                 prepare stream outpuy
-            MemImage *outImg = MemImage::create(Image::UBYTE, nWidth, nHeight, 1, 1);
-            memcpy(outImg->data(), cvOutputResized.data, cvOutputResized.rows * cvOutputResized.cols * sizeof(uchar));
+// //                 prepare stream outpuy
+//             MemImage *outImg = MemImage::create(Image::UBYTE, nWidth, nHeight, 1, 1);
+//             memcpy(outImg->data(), cvOutputResized.data, cvOutputResized.rows * cvOutputResized.cols * sizeof(uchar));
 
-            outImg->setSpacing(30.7 / nWidth, 45.0 / nHeight, 1);
-            ImageStreamData oisd(this);
-            oisd.setTimestampArrival(imgData->timestampArrival());
-            oisd.setTimestampDevice(imgData->timestampDevice());
-            std::vector<MemImage *> streamImages = {outImg};
-            oisd.setImages(streamImages);
-            updateListenersData(oisd);
+//             outImg->setSpacing(30.7 / nWidth, 45.0 / nHeight, 1);
+//             ImageStreamData oisd(this);
+//             oisd.setTimestampArrival(imgData->timestampArrival());
+//             oisd.setTimestampDevice(imgData->timestampDevice());
+//             std::vector<MemImage *> streamImages = {outImg};
+//             oisd.setImages(streamImages);
+//             updateListenersData(oisd);
         }
 
         std::tuple<cv::Mat, cv::Mat> LiveSegmentationStream::preProcessData(std::unique_ptr<MemImage> memImage) {
@@ -154,7 +154,7 @@ namespace ImFusion {
         }
 
         std::string LiveSegmentationStream::uuid() {
-            return std::__cxx11::string("dummy id");
+            return std::string("dummy id");
         }
 
         void LiveSegmentationStream::addInputStream(ImageStream* imgStream) {

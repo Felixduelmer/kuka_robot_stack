@@ -1,7 +1,7 @@
 #include "robotic_vessel/RobotControl.h"
 
-#include <ImFusion/Base/Log.h>
-#include <ImFusion/Stream/OpenIGTLinkConnection.h>
+#include <ImFusion/Core/Log.h>
+#include <ImFusion/Stream/IgtlConnection.h>
 #include <ImFusion/Stream/TrackingStreamData.h>
 #include <QDebug>
 #include <QVector3D>
@@ -12,12 +12,13 @@
 #include <iiwa_msgs/SetSmartServoLinSpeedLimits.h>
 
 using namespace std;
-using namespace cv;
+// using namespace cv;
 namespace ImFusion {
     namespace ROS_RoboticVessel {
 
 
-        RobotControl::RobotControl() {
+        RobotControl::RobotControl(const std::string& name) 
+        {
             onInitROS();
 
             probe_rotation_.block<4, 4>(0, 0) << 0, 0, -1, 0,
@@ -32,6 +33,42 @@ namespace ImFusion {
         }
 
         RobotControl::~RobotControl() { disconnect(); }
+
+
+         bool RobotControl::open()
+        {
+            return true;
+        }
+
+        bool RobotControl::close()
+        {
+            return stop();
+        }
+
+        bool RobotControl::isRunning() const
+        {
+            return true;
+        }
+
+        std::vector<TrackingInstrument> RobotControl::devices() const
+        {
+            return m_trackingInstruments;
+        }
+
+        std::string RobotControl::uuid()
+        {
+            return std::to_string(reinterpret_cast<ptrdiff_t>(this));
+        }
+
+        bool RobotControl::start()
+        {
+            return isRunning();
+        }
+        bool RobotControl::stop()
+        {
+            return true;
+        }
+
 
         //execute a movement along defined points
         void RobotControl::executeTrajectory() {
@@ -162,8 +199,8 @@ namespace ImFusion {
 
             node_handle.setParam("/iiwa/toolName", "linear");
 
-            OpenIGTLinkConnection dummy_connection("Service robot connection");
-            tracking_stream_ = new OpenIGTLinkTrackingStream(dummy_connection, "Robot");
+            IgtlConnection dummy_connection("Service robot connection");
+            tracking_stream_ = new IgtlTrackingStream(dummy_connection, "Robot Tracking Stream");
             tracking_stream_->open();
             is_robot_connected_ = true;
             loadCalibrationFromFile("IFLUSCalibration.config", probe_name);
@@ -192,26 +229,26 @@ namespace ImFusion {
 
                 //! This object is disposed by the destructor of TrackingStreamData, or at least so it says its documentation.
                 //! If you try to handle its lifetime -> CRASH, so leave it as it is.
-                auto *tracking_instrument = new TrackingInstrument();
-                tracking_instrument->active = true;
-                tracking_instrument->name = "US";
-                tracking_instrument->quality = 1;
+                TrackingInstrument tracking_instrument;
+                tracking_instrument.active = true;
+                tracking_instrument.name = "US";
+                tracking_instrument.quality = 1;
 //        auto image_center_pose = poseToEigenMat4(pose.poseStamped.pose, 1000) * probe_rotation_ * ultrasound_calibration_;
 
                 Eigen::Matrix4d image_center_pose = poseToEigenMat4(pose.poseStamped.pose, 1000) * probe_rotation_;
 
-                tracking_instrument->matrix = image_center_pose;
+                tracking_instrument.matrix = image_center_pose;
 
                 current_image_center_pose_.pose = eigenMat4ToPose(image_center_pose);
                 current_image_center_pose_.header = pose.poseStamped.header;
 
-                std::vector<TrackingInstrument *> instrument_vector{tracking_instrument};
+                std::vector<TrackingInstrument> instrument_vector = {tracking_instrument};
                 TrackingStreamData datas(tracking_stream_, instrument_vector);
 
                 std::chrono::system_clock::time_point arrivalTime = std::chrono::high_resolution_clock::now();
                 datas.setTimestampArrival(arrivalTime);
 
-                tracking_stream_->sendStreamData(datas);
+                updateListenersData(datas);
 
                 emit poseChanged();
             }

@@ -1,9 +1,151 @@
+// #pragma once
+
+// #include <ImFusion/Base/Algorithm.h>
+// #include <ImFusion/Base/DataModel.h>
+// #include <ImFusion/Stream/IgtlTrackingStream.h>
+// #include <ImFusion/Stream/IgtlImageStream.h>
+// #include <memory>
+
+// #include <iiwa_ros/state/cartesian_pose.hpp>
+// #include <iiwa_ros/state/cartesian_wrench.hpp>
+// #include <iiwa_ros/state/joint_torque.hpp>
+
+// #include <iiwa_ros/command/cartesian_pose.hpp>
+// #include <iiwa_ros/command/cartesian_pose_linear.hpp>
+// #include <iiwa_ros/command/generic_command.hpp>
+
+// #include <iiwa_ros/service/control_mode.hpp>
+// #include <iiwa_ros/service/time_to_destination.hpp>
+
+// #include <iiwa_msgs/DOF.h>
+// #include <geometry_msgs/PoseStamped.h>
+// #include <geometry_msgs/WrenchStamped.h>
+
+// #include <Eigen/Dense>
+// #include <QObject>
+// #include <QTimer>
+// #include <string>
+// #include <vector>
+// #include <QVector>
+// #include <opencv2/core/mat.hpp>
+// #include <opencv2/opencv.hpp>
+// #include <fstream>
+// #include <iostream>
+
+
+// /************************************************************************
+//  *                           ROS
+//  * **********************************************************************/
+// #include <ros/ros.h>
+// #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+// #include <geometry_msgs/Point32.h>
+// #include <std_msgs/Bool.h>
+// #include <sensor_msgs/Image.h>
+
+// #define PI 3.14159265358979323846
+// #define FP 0.051264
+// #define FP1 0.0375
+
+// const int ON_FINAL_POSE = 1;
+// const int ON_BACK_INITIAL_POSE = 2;
+
+
+// const int FAN_MOTION_STYPE_CONTINOUS = 0;
+// const int FAN_MOTION_STYPE_STEP = 1;
+
+// const int ROTATION_X = 0;
+// const int ROTATION_Y = 1;
+
+// // Felix
+// const int NO_TRACKED_MOTION = 0;
+// const int TRAJECTORY_MOTION = 1;
+// const int FAN_MOTION = 2;
+
+// //vision control
+// const int ON_CURRENT_POSE = -1;
+// const int ON_INITIAL_POSE = 0;
+// const double INITHEIGHT = 0.0;   //mm
+
+// namespace ImFusion {
+//     namespace ROS_RoboticVessel {
+
+//         class RobotControl : public QObject {
+//         Q_OBJECT
+//         public:
+//             RobotControl(const std::string& name = "ROS Topic Tracking Stream");
+
+//             ~RobotControl();
+
+//             /**
+//              * @brief Connect to the robot.
+//              * @param [in] probe_name - the name of the ultrasound probe being used. The respective calibration will be loaded
+//              * from from IFLUSCalibration file.
+//              */
+//             void connectRobot(const std::string &probe_name);
+
+//             void disconnect();
+
+//             //Felix
+//             void addPointConfiguration(const Eigen::Matrix4d &pose) { manualTrajPoints.push_back(pose); }
+
+//             void deletePointConfigurations() { manualTrajPoints.clear(); }
+
+//             void executeTrajectory();
+
+//             void reExecuteTrajectory();
+
+//             void onMoveToNewPoint();
+
+//             void FinishedMoveToNewPointCallback();
+
+//             void RotateAroundTCP(double fOffsetAngle, int nRotationAxis, bool callBack);
+
+//             inline bool isRobotConnected() { return is_robot_connected_; }
+
+//             /**
+//              * @brief Make the robot execute a Cartesian motion to the given target pose.
+//              * @param [in] pose - Target pose for the motion.
+//              * @param [in] linear - If true, a linear motion will be executed.
+//              * @param [in] callback - Optional callback function to be called when the robot reaches the given target pose.
+//              */
+//             void executeCartesianCommand(const geometry_msgs::Pose &pose, bool linear,
+//                                          const std::function<void()> &callback = nullptr);
+
+//             /**
+//              * @brief Make the robot execute a Cartesian motion to the given target pose.
+//              * @param [in] matrix - Target pose for the motion.
+//              * @param [in] linear - If true, a linear motion will be executed.
+//              * @param [in] callback - Optional callback function to be called when the robot reaches the given target pose.
+//              */
+//             void executeCartesianCommand(const Eigen::Matrix4d &matrix, bool linear,
+//                                          const std::function<void()> &callback = nullptr);
+
+
+//             /**
+//              * @brief Make the robot execute a Cartesian motion to the given target pose.
+//              * @param [in] q - Rotation component of the target pose for the robot motion.
+//              * @param [in] t - Translational component of the target pose for the robot motion.
+//              * @param [in] linear - If true, a linear motion will be executed.
+//              * @param [in] callback - Optional callback function to be called when the robot reaches the given target pose.
+//              */
+//             void executeCartesianCommand(const Eigen::Quaterniond &q, const Eigen::Vector3d &t, bool linear,
+//                                          std::function<void()> callback = nullptr);
+
+//             /**
+//              * @brief Activate position mode on the robot.
+//              */
+//             void applyPositionControlMode() {
+//                 control_mode_.setPositionControlMode();
+//             }
+
 #pragma once
 
 #include <ImFusion/Base/Algorithm.h>
 #include <ImFusion/Base/DataModel.h>
-#include <ImFusion/Stream/OpenIGTLinkTrackingStream.h>
-#include <ImFusion/Stream/OpenIGTLinkImageStream.h>
+#include <ImFusion/Stream/IgtlTrackingStream.h>
+#include <ImFusion/Stream/IgtlImageStream.h>
+#include <ImFusion/Stream/LiveTrackingStream.h>
+#include <memory>
 
 #include <iiwa_ros/state/cartesian_pose.hpp>
 #include <iiwa_ros/state/cartesian_wrench.hpp>
@@ -68,12 +210,26 @@ const double INITHEIGHT = 0.0;   //mm
 namespace ImFusion {
     namespace ROS_RoboticVessel {
 
-        class RobotControl : public QObject {
+        class RobotControl :  public QObject, public LiveTrackingStreamLegacy
+        {
         Q_OBJECT
         public:
-            RobotControl();
+            explicit RobotControl(const std::string& name = "ROS Topic Tracking Stream");
 
             ~RobotControl();
+
+            bool open() override;
+            bool close() override;
+            bool start() override;
+            bool stop() override;
+            bool isRunning() const override;
+
+            std::string uuid() override;
+
+
+            std::vector<TrackingInstrument> devices() const override;
+
+            // ImFusion::Parameter<std::string> p_topicName = {"Ros Topic", "/iiwa/state/CartesianPose", *this};
 
             /**
              * @brief Connect to the robot.
@@ -138,11 +294,18 @@ namespace ImFusion {
             }
 
             /**
- * @brief Add the tracking stream generated by thi algorithm to the provided DataModel.
- * @param [in] data_model
- */
+             * @brief Add the tracking stream generated by thi algorithm to the provided DataModel.
+             * @param [in] data_model
+             */
+
+            /*
+            * @brief Add the tracking stream generated by thi algorithm to the provided DataModel.
+            * @param [in] data_model
+            */
+            // TODO: Reimplement this
             void addStreamToDataModel(DataModel *data_model) {
-                data_model->add(tracking_stream_, "Robot Tracking");
+                // std::unique_ptr<IgtlTrackingStream*> uniquePr(tracking_stream_);
+                // data_model->add(tracking_stream_, "Robot Tracking");
                 owning_stream_ = false;
             }
 
@@ -363,6 +526,7 @@ namespace ImFusion {
             std::vector<double> offsetArr{0, 0, 0, 0, 0};
             double backToOrigDegree{0};
             QTimer *timer;
+            std::vector<TrackingInstrument> m_trackingInstruments;
 
             // the pixel height and width, this is calculated by 55mm depth and 37.5 mm width image
             float m_pixel_height = 0.076f; // in mm
@@ -385,7 +549,7 @@ namespace ImFusion {
             iiwa_ros::service::TimeToDestinationService time_to_destination_{};
 
             std::unique_ptr<ros::AsyncSpinner> ros_spinner_{nullptr};
-            OpenIGTLinkTrackingStream *tracking_stream_{nullptr};
+            IgtlTrackingStream *tracking_stream_{nullptr};
             bool owning_stream_{true};
             bool is_robot_connected_{false};
 

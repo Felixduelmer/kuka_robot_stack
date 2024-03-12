@@ -3,8 +3,8 @@
 #include <Eigen/Dense>
 #include <QtCore/QObject>
 #include <ImFusion/GUI/MainWindowBase.h>
-#include <ImFusion/US/USSweepRecorderAlgorithm.h>
-#include <ImFusion/US/USSweepRecorderController.h>
+#include <ImFusion/LiveUS/USSweepRecorderAlgorithm.h>
+// #include <ImFusion/LiveUS/USSweepRecorderController.h>
 #include <ImFusion/Base/DataList.h>
 #include <QtCore/QThread>
 #include <ImFusion/Stream/FakeTrackingStream.h>

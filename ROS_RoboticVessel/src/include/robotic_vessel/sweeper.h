@@ -11,9 +11,9 @@
 #include <ImFusion/Stream/LiveTrackingStream.h>    // for LiveTrackingStream
 #include <ImFusion/US/FanMask.h>                   // for FanMask
 #include <ImFusion/US/GlSweepCompounding.h>        // for GlSweepCompounding
-#include <ImFusion/US/USSweepRecorderAlgorithm.h>  // for USSweepRecorderAlg...
-#include <ImFusion/US/UltrasoundGeometry.h>        // for UltrasoundGeometry
-#include <ImFusion/US/UltrasoundSweep.h>           // for UltrasoundSweep
+#include <ImFusion/LiveUS/USSweepRecorderAlgorithm.h>  // for USSweepRecorderAlg...
+#include <ImFusion/LiveUS/UltrasoundGeometry.h>        // for UltrasoundGeometry
+#include <ImFusion/LiveUS/UltrasoundSweep.h>           // for UltrasoundSweep
 #include <memory>                                  // for shared_ptr, __shar...
 #include <string>                                  // for string
 #include <vector>                                  // for vector

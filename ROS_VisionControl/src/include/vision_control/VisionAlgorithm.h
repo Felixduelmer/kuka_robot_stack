@@ -2,8 +2,8 @@
 
 #include <ImFusion/Base/Algorithm.h>
 #include <ImFusion/Base/DataModel.h>
-#include <ImFusion/Stream/OpenIGTLinkTrackingStream.h>
-#include <ImFusion/Stream/OpenIGTLinkImageStream.h>
+#include <ImFusion/Stream/IgtlTrackingStream.h>
+#include <ImFusion/Stream/IgtlImageStream.h>
 
 #include <iiwa_ros/state/cartesian_pose.hpp>
 #include <iiwa_ros/state/cartesian_wrench.hpp>
@@ -50,11 +50,9 @@
 #include <std_msgs/Bool.h>
 #include <sensor_msgs/Image.h>
 
-#include <vision_control/VisionStreamOptimizer.h>
-
-#define PI 3.14159265358979323846
-#define FP 0.051264
-#define FP1 0.0375
+constexpr double PI = 3.14159265358979323846;
+// #define FP 0.051264
+// #define FP1 0.0375
 
 const int ON_FINAL_POSE = 1;
 const int ON_BACK_INITIAL_POSE = 2;
@@ -105,7 +103,7 @@ public:
    * @param [in] data_model
    */
   void addStreamToDataModel(DataModel* data_model) {
-    data_model->add(tracking_stream_, "Robot Tracking");
+    data_model->add(std::unique_ptr<ImFusion::IgtlTrackingStream>(tracking_stream_), "Robot Tracking");
     owning_stream_ = false;
   }
 
@@ -295,101 +293,101 @@ public:
   geometry_msgs::PoseStamped current_image_center_pose_{};
 
   //vision control
-  void setMoveStatus(int poseStatus);
-  void setCurrentScanPointsIteration(int Iteration);
+  // void setMoveStatus(int poseStatus);
+  // void setCurrentScanPointsIteration(int Iteration);
 
-  void stopStepMotion();
-  void VisionMovementFinishCallback();
+  // void stopStepMotion();
+  // void VisionMovementFinishCallback();
 
-  void onVisionStepGotoPose(const Eigen::Quaterniond& qPose, const Eigen::Vector3d& translation, bool callback = true);
-  int getCurrentScanPointIndex();
-  Eigen::Matrix4f getHomoTransMatrix(const std::vector<Eigen::Vector3f> &srcPoints, const std::vector<Eigen::Vector3f> &dstPoints);
+  // void onVisionStepGotoPose(const Eigen::Quaterniond& qPose, const Eigen::Vector3d& translation, bool callback = true);
+  // int getCurrentScanPointIndex();
+  // Eigen::Matrix4f getHomoTransMatrix(const std::vector<Eigen::Vector3f> &srcPoints, const std::vector<Eigen::Vector3f> &dstPoints);
 
 
-  // the poses that will be used in the ultrasound swep
-  std::vector<Eigen::VectorXd> m_scanPointPoses;
-  std::vector<Eigen::VectorXd> m_updatedScanPointPoses;
-  std::vector<Eigen::VectorXd> updateScanPointPoses(const std::vector<Eigen::VectorXd> &prePoses, const Eigen::Matrix4f &tranformation);
-  int m_scanPointsNumber{0};
-  int m_MoveStatus{-1};  //used to entere callback function for vision control
+  // // the poses that will be used in the ultrasound swep
+  // std::vector<Eigen::VectorXd> m_scanPointPoses;
+  // std::vector<Eigen::VectorXd> m_updatedScanPointPoses;
+  // std::vector<Eigen::VectorXd> updateScanPointPoses(const std::vector<Eigen::VectorXd> &prePoses, const Eigen::Matrix4f &tranformation);
+  // int m_scanPointsNumber{0};
+  // int m_MoveStatus{-1};  //used to entere callback function for vision control
 
-  // movement tracking
-  bool restart_robot_pressed = false;
-  bool m_resetting_position = false; // this flag is true when the robot is in the break point, and here the confidence map
-  // does not need to computed.
-  int m_break_point{0};
-  bool m_motion_back_to_normal = false; // this flag is true, when the robot is recovered from the break point and
-  // go back to the normal, if this is true, then the recording of US sweep starts again
-  StreamOptimizer * m_usListener;
-  void transform_trajectory();
-  void write_txt_file(std::string file_name, unsigned int break_point = 0, bool f_half = false);
-  void write_transformation(Eigen::Matrix4f transformation);
-  inline void set_us_stream(ImageStream * stream) { usStream = stream; };
-  inline ImageStream* get_us_stream(){ return usStream; };
-  void start_streaming();
-  void stop_streaming();
-  float optimize_curr_probe_pose(MemImage* memImage);
-  inline cv::Mat getConfimapResult() { return m_cvMatConfiMapUChar; }
-  inline bool getRotationDirection() { return m_rotation_direction; }
+  // // movement tracking
+  // bool restart_robot_pressed = false;
+  // bool m_resetting_position = false; // this flag is true when the robot is in the break point, and here the confidence map
+  // // does not need to computed.
+  // int m_break_point{0};
+  // bool m_motion_back_to_normal = false; // this flag is true, when the robot is recovered from the break point and
+  // // go back to the normal, if this is true, then the recording of US sweep starts again
+  // StreamOptimizer * m_usListener;
+  // void transform_trajectory();
+  // void write_txt_file(std::string file_name, unsigned int break_point = 0, bool f_half = false);
+  // void write_transformation(Eigen::Matrix4f transformation);
+  // inline void set_us_stream(ImageStream * stream) { usStream = stream; };
+  // inline ImageStream* get_us_stream(){ return usStream; };
+  // void start_streaming();
+  // void stop_streaming();
+  // float optimize_curr_probe_pose(MemImage* memImage);
+  // inline cv::Mat getConfimapResult() { return m_cvMatConfiMapUChar; }
+  // inline bool getRotationDirection() { return m_rotation_direction; }
 
-  /**
-   * @brief start_recording_us_stream
-   */
-  void start_recording_us_stream();
+  // /**
+  //  * @brief start_recording_us_stream
+  //  */
+  // void start_recording_us_stream();
 
-  /**
-   * @brief set_new_stream
-   * @param us_stream
-   * @param robot_stream
-   */
-  void set_new_stream(Data* us_stream, Data* robot_stream);
+  // /**
+  //  * @brief set_new_stream
+  //  * @param us_stream
+  //  * @param robot_stream
+  //  */
+  // void set_new_stream(Data* us_stream, Data* robot_stream);
 
-  /**
-   * @brief stop_recording_us_stream
-   */
-  void stop_recording_us_stream();
+  // /**
+  //  * @brief stop_recording_us_stream
+  //  */
+  // void stop_recording_us_stream();
 
-  /**
-   * @brief unet_segmentation Sends the US image received from cephasonics to neural network part.
-   * @param us_image
-   */
-  void unet_segmentation(cv::Mat us_image);
+  // /**
+  //  * @brief unet_segmentation Sends the US image received from cephasonics to neural network part.
+  //  * @param us_image
+  //  */
+  // void unet_segmentation(cv::Mat us_image);
 
-  /**
-   * @brief find_closest_centroid given all the contours in the image along with the ground truth centroid
-   * the algorithm finds the closest contour centroid to the ground truth
-   * @param contours vector of contours, each contour consists of vector of points
-   * @param gt_centroid a point which shows the gt centroid
-   * @return
-   */
-  cv::Point find_closest_centroid(const std::vector<std::vector<cv::Point>> &contours, const cv::Point & gt_centroid);
+  // /**
+  //  * @brief find_closest_centroid given all the contours in the image along with the ground truth centroid
+  //  * the algorithm finds the closest contour centroid to the ground truth
+  //  * @param contours vector of contours, each contour consists of vector of points
+  //  * @param gt_centroid a point which shows the gt centroid
+  //  * @return
+  //  */
+  // cv::Point find_closest_centroid(const std::vector<std::vector<cv::Point>> &contours, const cv::Point & gt_centroid);
 
-  // callbacks
-  /**
-   * @brief receive_us_results a callback function, subscribes to segmentation results topic and gets the
-   * segmented US images
-   * @param img_msg the segmented image
-   */
-  void receive_us_results(sensor_msgs::ImageConstPtr img_msg);
-  /**
-   * @brief check_movement a callback which listens to the messages come from the movement detector,
-   * if movement occured, then the break point is set
-   * @param movement_occured true or false
-   */
-  void check_movement(const std_msgs::BoolPtr movement_occured);
-  std::vector<cv::Mat> m_segmented_images; // a vector to collect all the segmented US images.
-  unsigned int m_transformation_count{0}; // used to give identity number for different transformations and sweeps, occured during
-  // US examination
-  unsigned int img_idx{1}; // used for saving the images with different names, for testing purposes
+  // // callbacks
+  // /**
+  //  * @brief receive_us_results a callback function, subscribes to segmentation results topic and gets the
+  //  * segmented US images
+  //  * @param img_msg the segmented image
+  //  */
+  // void receive_us_results(sensor_msgs::ImageConstPtr img_msg);
+  // /**
+  //  * @brief check_movement a callback which listens to the messages come from the movement detector,
+  //  * if movement occured, then the break point is set
+  //  * @param movement_occured true or false
+  //  */
+  // void check_movement(const std_msgs::BoolPtr movement_occured);
+  // std::vector<cv::Mat> m_segmented_images; // a vector to collect all the segmented US images.
+  // unsigned int m_transformation_count{0}; // used to give identity number for different transformations and sweeps, occured during
+  // // US examination
+  // unsigned int img_idx{1}; // used for saving the images with different names, for testing purposes
 
 
 
 
   //zcy
-  void onRoutePlanning();
-  cv::Mat onBoneExtraction(cv::Mat img);
-  void onSurfaceExtraction(cv::Mat img_bone, int i);
-  void onCoordinateTransformation();
+  // void onRoutePlanning();
+  // cv::Mat onBoneExtraction(cv::Mat img);
+  // void onSurfaceExtraction(cv::Mat img_bone, int i);
+  // void onCoordinateTransformation();
 
 
   //Felix
@@ -487,19 +485,19 @@ private:
   Eigen::Matrix4d poseToEigenMat4(const geometry_msgs::Pose& pose, double scaling_factor = 1);
 
 
-  float prev_theta = 0.0f;
-  geometry_msgs::Pose m_movement_occured_pose;
-  Data* m_cepha_stream;
-  Data* m_robot_stream;
-  bool isStopped = false;
+  // float prev_theta = 0.0f;
+  // geometry_msgs::Pose m_movement_occured_pose;
+  // Data* m_cepha_stream;
+  // Data* m_robot_stream;
+  // bool isStopped = false;
 
   // movement detection
 
-  ConfidentMapConvex* m_confiMapConvex;
-  SharedImageSet* m_sharedImageSetCar;
-  DataList* m_dataListCar;
-  DataList* m_dataListConfiMap;
-  cv::Mat m_cvMatConfiMapUChar; // the confidence map is saved here after calculation
+  // ConfidentMapConvex* m_confiMapConvex;
+  // SharedImageSet* m_sharedImageSetCar;
+  // DataList* m_dataListCar;
+  // DataList* m_dataListConfiMap;
+  // cv::Mat m_cvMatConfiMapUChar; // the confidence map is saved here after calculation
 
   // the pixel height and width, this is calculated by 55mm depth and 37.5 mm width image
   float m_pixel_height = 0.076f; // in mm
@@ -507,7 +505,7 @@ private:
 
   bool m_rotation_direction = true; // the direction where the robot need to move after the confidence map is calculated
   // if true then it mean to the positive dir around the rotation axis
-  USSweepRecorderAlgorithm* m_multiUSSweepRecorder;
+  // USSweepRecorderAlgorithm* m_multiUSSweepRecorder;
 
 
   iiwa_ros::state::CartesianPose pose_state_{};
@@ -521,7 +519,7 @@ private:
   iiwa_ros::service::TimeToDestinationService time_to_destination_{};
 
   std::unique_ptr<ros::AsyncSpinner> ros_spinner_{nullptr};
-  OpenIGTLinkTrackingStream* tracking_stream_{nullptr};
+  IgtlTrackingStream* tracking_stream_{nullptr};
   bool owning_stream_{true};
   bool is_robot_connected_{false};
 

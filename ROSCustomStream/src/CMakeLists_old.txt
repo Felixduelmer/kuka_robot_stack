@@ -1,0 +1,65 @@
+cmake_minimum_required(VERSION 3.15)
+project(RosCustomStreamExample)
+message(STATUS "> Configuring ${PROJECT_NAME}")
+
+set(ROS_WORKSPACE_ROOT /opt/ros/noetic)
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+
+# Setting the header files of your project
+set(RosCustomStreamHeaders
+        CustomROSTopicTrackingStream.h
+        CustomROSPlugin.h)
+
+# Setting the cpp files of your project
+set(RosCustomStreamSources
+        CustomROSTopicTrackingStream.cpp
+        CustomROSPlugin.cpp)
+
+# Setting eventual .ui files of your project
+set(RosCustomStreamUiHeaders)
+
+# Locate the ImFusion SDK.
+# List required modules/plugins in the COMPONENTS section (e.g. COMPONENTS ImFusionSeg ImFusionReg).
+set(ImFusionSDK FALSE)
+if (NOT TARGET ImFusionLib)
+  set(ImFusionSDK TRUE)
+endif ()
+
+find_package(Threads REQUIRED)
+find_package(catkin REQUIRED COMPONENTS roscpp)
+if (ImFusionSDK)
+  find_package(ImFusionLib COMPONENTS ImFusionStream ImFusionRobotics ImFusionROS REQUIRED)
+else ()
+  imfusion_require_modules("STREAM;RoboticsPlugin;ROSPlugin")
+endif ()
+
+# Define and configure the CMake target
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
+set(CMAKE_AUTOUIC ON)
+
+# Define target library
+add_library(RosCustomStreamExample SHARED ${RosCustomStreamSources} ${RosCustomStreamHeaders})
+
+target_include_directories(${PROJECT_NAME}
+        PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/msgs>
+        PRIVATE
+        ${catkin_INCLUDE_DIRS} ${roscpp_INCLUDE_DIRS}
+        )
+target_link_libraries(${PROJECT_NAME}
+        PUBLIC
+        ImFusionLib
+        ImFusionStream
+        ImFusionROS
+        ImFusionRobotics
+        ${catkin_LIBRARIES} ${roscpp_LIBRARIES}
+        )
+
+if (NOT ImFusionSDK)
+  imfusion_set_common_target_properties(Plugin)
+  imfusion_common_install(Plugin)
+else ()
+  imfusion_set_common_target_properties()
+  imfusion_provide_ide_instructions()
+endif ()

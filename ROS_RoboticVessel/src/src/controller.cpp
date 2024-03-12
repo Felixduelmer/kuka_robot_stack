@@ -2,7 +2,7 @@
 #include "robotic_vessel/algorithm.h"
 #include <QDebug>
 
-#include <ImFusion/Base/Log.h>
+#include <ImFusion/Core/Log.h>
 #include <ImFusion/Base/DataModel.h>
 
 #include <ImFusion/GUI/MainWindowBase.h>
@@ -22,7 +22,7 @@
 #define slots Q_SLOTS
 
 #include "ui_controller.h"
-#include "robotic_vessel/vessel_segmentation_listener.h"
+// #include "robotic_vessel/vessel_segmentation_listener.h"
 #include <opencv2/opencv.hpp>
 
 
@@ -41,7 +41,7 @@ namespace ImFusion {
 
 
         void PluginController::init() {
-            addToAlgorithmDock();
+            // addToAlgorithmDock();
 
             connect(ui_->pbtConnectRobot, &QPushButton::clicked, this, &PluginController::onConnectRobotClicked);
             connect(ui_->pbtStart, &QPushButton::clicked, this, &PluginController::onStartClicked);
@@ -53,19 +53,19 @@ namespace ImFusion {
             connect(ui_->pbtnImpedanceCtrl, &QPushButton::clicked, this, &PluginController::onStartImpedanceControl);
 
 
-            robControl = new RobotControl();
-            sweepRecAndComp = new SweepRecAndComp(m_main);
-            tracker = new Tracker();
-            liveSegmentationStream = new LiveSegmentationStream();
+            robControl = new RobotControl("test");
+            // sweepRecAndComp = new SweepRecAndComp(m_main);
+            // tracker = new Tracker();
+            // liveSegmentationStream = new LiveSegmentationStream();
 
             connect(robControl, &RobotControl::reachedStartingPoint, this, &PluginController::startRecording);
             connect(robControl, &RobotControl::reachedEndPoint, this, &PluginController::onStopClicked);
-            connect(tracker, &Tracker::lostDoppler, robControl, &RobotControl::lostDopplerSignal);
-            connect(tracker, &Tracker::foundDoppler, robControl, &RobotControl::foundDopplerSignal);
+            // connect(tracker, &Tracker::lostDoppler, robControl, &RobotControl::lostDopplerSignal);
+            // connect(tracker, &Tracker::foundDoppler, robControl, &RobotControl::foundDopplerSignal);
 
 
-            connect(liveSegmentationStream, &LiveSegmentationStream::newDopplerImage, tracker,
-                    &Tracker::doppler_tracker);
+            // connect(liveSegmentationStream, &LiveSegmentationStream::newDopplerImage, tracker,
+            //         &Tracker::doppler_tracker);
             cv::namedWindow("dopplerImage");
             cv::namedWindow("annotationImage");
             cv::namedWindow("contImage");
@@ -73,7 +73,7 @@ namespace ImFusion {
         }
 
         void PluginController::startRecording() {
-            sweepRecAndComp->startSweepRecording();
+            // sweepRecAndComp->startSweepRecording();
         }
 
 
@@ -84,8 +84,9 @@ namespace ImFusion {
         void PluginController::onStopClicked() {
 //            imageStream->stop();
 //            imageStream->close();
-            sweepRecAndComp->stop();
-//            robControl->applyPositionControlMode();
+
+            // sweepRecAndComp->stop();
+           robControl->applyPositionControlMode();
 
         }
 
@@ -115,23 +116,24 @@ namespace ImFusion {
 
 
         void PluginController::onStartSegmentationClicked() {
-            if (useDummyData) {
-                ImFusionFile file(
-                        "/data1/volume1/data/felix_data/results_sweeps/original_sweep_15_06_19_27_12.imf");
-                file.open(0);
+            // if (useDummyData) {
+            //     ImFusionFile file(
+            //             "/data1/volume1/data/felix_data/results_sweeps/original_sweep_15_06_19_27_12.imf");
+            //     file.open(0);
 
-                DataList dataList;
-                file.load(dataList);
+            //     DataList dataList;
+            //     file.load(dataList);
 
-                SharedImageSet *sis = dataList.getImage(Data::UNKNOWN);
-                imageStream = new PlaybackStream(*sis);
-            } else {
-                imageStream = static_cast<ImageStream *>(m_main->dataModel()->get("Ultrasound Stream"));
-            }
-            liveSegmentationStream->addInputStream(imageStream);
-            m_main->dataModel()->add(liveSegmentationStream, "liveSegmentationStream");
-            imageStream->open();
-            imageStream->start();
+            //     SharedImageSet *sis = dataList.getImage(Data::UNKNOWN);
+            //     imageStream = new PlaybackStream(*sis);
+            // } else {
+            //     imageStream = static_cast<ImageStream *>(m_main->dataModel()->get("Ultrasound Stream"));
+            // }
+            // liveSegmentationStream->addInputStream(imageStream);
+
+            // m_main->dataModel()->add(std::unique_ptr<LiveSegmentationStream>(liveSegmentationStream), "liveSegmentationStream");
+            // imageStream->open();
+            // imageStream->start();
         }
 
     }  // namespace ROS_RoboticVessel

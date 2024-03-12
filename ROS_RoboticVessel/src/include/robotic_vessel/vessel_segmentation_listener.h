@@ -20,7 +20,7 @@
 namespace ImFusion {
     namespace ROS_RoboticVessel {
 
-        class LiveSegmentationStream : public QObject, public ImageStream, public StreamListener {
+        class LiveSegmentationStream : public QObject, public ImageStreamLegacy, public StreamListener {
         Q_OBJECT
         public:
             LiveSegmentationStream();

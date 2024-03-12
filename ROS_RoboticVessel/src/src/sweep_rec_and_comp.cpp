@@ -1,5 +1,5 @@
 #include "robotic_vessel/sweep_rec_and_comp.h"
-#include <ImFusion/Base/Log.h>
+// #include <ImFusion/Base/Log.h>
 #include <ImFusion/GL/GlVolumeCompounding.h>
 #include <ImFusion/US/GlSweepCompounding.h>
 #include <ImFusion/GL/SharedImageSet.h> // for SharedImageSet
@@ -12,9 +12,9 @@
 #include <QtCore/QTimer>
 #include <iostream>
 #include <chrono>
-#include <ImFusion/US/USSweepRecorderAlgorithm.h>
-#include <ImFusion/US/USSweepRecorderController.h>
-#include <ImFusion/US/LiveSweepRecordingVisualizationController.h>
+#include <ImFusion/LiveUS/USSweepRecorderAlgorithm.h>
+#include <ImFusion/LiveUS/USSweepRecorderController.h>
+#include <ImFusion/LiveUS/LiveSweepRecordingVisualizationController.h>
 #include <ImFusion/US/UltrasoundSweepRingBuffer.h>
 #include <ImFusion/Base/BasicImageProcessing.h>
 #include <ImFusion/GL/IntensityMask.h>
@@ -52,16 +52,26 @@ namespace ImFusion {
             ImageStream *USStream = static_cast<ImageStream *>(m_main->dataModel()->get("Ultrasound Stream"));
             vec.push_back((USStream));
 
-            sweepRecorderAlgorithm = new USSweepRecorderAlgorithm(vec);
+            // Assuming that USSweepRecorderAlgorithm is derived from ImFusion::Algorithm
+            auto sweepRecorderAlgorithm = std::make_unique<USSweepRecorderAlgorithm>(vec);
             sweepRecorderAlgorithm->setTemporalOffset(0.63);
             sweepRecorderAlgorithm->setTrackingQualityThreshold(0.1);
             sweepRecorderAlgorithm->start();
+
             Properties ctrlRecorder;
             ctrlRecorder.addSubProperties("Controller");
-            m_main->addAlgorithm(sweepRecorderAlgorithm, &ctrlRecorder);
-            USSweepRecorderController *controller = dynamic_cast<USSweepRecorderController *>(m_main->getAlgorithmController(
-                    sweepRecorderAlgorithm));
-
+            
+            // save pointer 
+            auto *sweepRecoerderPointer = sweepRecorderAlgorithm.get(); 
+            // Pass the unique_ptr to addAlgorithm using std::move, which transfers ownership
+            m_main->addAlgorithm(std::move(sweepRecorderAlgorithm), &ctrlRecorder);
+            LOG_DEBUG("Added USSweepRecorderAlgorithm");
+            USSweepRecorderController *controller = dynamic_cast<USSweepRecorderController *>(m_main->getAlgorithmController(sweepRecoerderPointer));
+            LOG_DEBUG("Retrieved USSweepRecorderController Controller");
+            if(controller == nullptr) {
+                LOG_DEBUG("Controller is null");
+                return;
+            }
             ringBuffer = controller->liveSweep();
             ringBuffer->setBufferSize(999999999);
 //            IntensityMask intensityMask = new IntensityMask();
@@ -73,12 +83,12 @@ namespace ImFusion {
 
         void SweepRecAndComp::onUpdateVolume() {
             numberOfPartialSweeps += 1;
-            DataList datalist;
+            OwningDataList datalist;
             sweepRecorderAlgorithm->stop();
-            sweepRecorderAlgorithm->output(datalist);
+            datalist = sweepRecorderAlgorithm->takeOutput();
 //            sweepRecorderAlgorithm->start();
-            UltrasoundSweep *usSweep = static_cast<UltrasoundSweep *>(datalist.getItem(0));
-            UltrasoundSweep *usSweepOriginal = static_cast<UltrasoundSweep *>(datalist.getItem(1));
+            UltrasoundSweep *usSweep = static_cast<UltrasoundSweep *>(datalist.extractItem(0).get());
+            UltrasoundSweep *usSweepOriginal = static_cast<UltrasoundSweep *>(datalist.extractItem(1).get());
 
             // necessary???
             Selection sel;
@@ -97,28 +107,28 @@ namespace ImFusion {
             std::chrono::steady_clock::time_point compoundingStarted = std::chrono::steady_clock::now();
             sc2->compute();  // We do the volume compounding
             std::chrono::steady_clock::time_point compoundingEnded = std::chrono::steady_clock::now();
-            DataList datalist3;
-            sc2->output(datalist3);
+            OwningDataList datalist3;
+            datalist3 = sc2->takeOutput();
 
             std::cout << "Compounding took = "
                       << std::chrono::duration_cast<std::chrono::milliseconds>(compoundingEnded - compoundingStarted).count()
                       << "[µs]" << std::endl;
 
-            m_main->dataModel()->add(datalist3.getItem(0), "Partial Volume ");
+            m_main->dataModel()->add(std::move(datalist3.extractItem(0)), "Partial Volume ");
 //            m_main->dataModel()->add(usSweep, "Partial Sweep ");
 
             if (m_exportSweeps) {
-                auto sis = static_cast<SharedImageSet *>(datalist3.getItem(0));
+                auto sis = static_cast<SharedImageSet *>(datalist3.extractItem(0).get());
                 sis->get()->sync();
                 auto str = getDayAndTime();
                 BackgroundExporter *sweepExporter = new BackgroundExporter();
-                sweepExporter->save(usSweep, "/data1/volume1/data/felix_data/results_sweeps/sweep_" + str + ".imf");
+                sweepExporter->saveAsync(usSweep, "/data1/volume1/data/felix_data/results_sweeps/sweep_" + str + ".imf");
                 BackgroundExporter *originalSweepExporter = new BackgroundExporter();
-                originalSweepExporter->save(usSweepOriginal,
+                originalSweepExporter->saveAsync(usSweepOriginal,
                                             "/data1/volume1/data/felix_data/results_sweeps/original_sweep_" + str +
                                             ".imf");
                 BackgroundExporter *volExporter = new BackgroundExporter();
-                volExporter->save(sis, "/data1/volume1/data/felix_data/results_sweeps/vol_" + str + ".imf");
+                volExporter->saveAsync(sis, "/data1/volume1/data/felix_data/results_sweeps/vol_" + str + ".imf");
             }
 
             delete sc2;
@@ -140,32 +150,34 @@ namespace ImFusion {
 //            delete sweepRecorderAlgorithm;
         }
 
+
+        //Not needed right now
         void SweepRecAndComp::compoundAllSweeps() {
-            DataList outputVolume;
-            GlVolumeCompounding *volumeCompounding;
+            // DataList outputVolume;
+            // GlVolumeCompounding *volumeCompounding;
 
-            std::vector<SharedImageSet *> container = m_main->dataModel()->getImages(Data::VOLUME);
-            auto *container2 = new SharedImageSet(); // don't own raw data
+            // std::vector<SharedImageSet *> container = m_main->dataModel()->getImages(Data::VOLUME);
+            // auto *container2 = new SharedImageSet(); // don't own raw data
 
-            for (int jj = container.size() - numberOfPartialSweeps; jj < container.size(); jj++) {
-                container2->add(container[jj]->get(0));
-            }
+            // for (int jj = container.size() - numberOfPartialSweeps; jj < container.size(); jj++) {
+            //     container2->add(container[jj]->get(0));
+            // }
 
-            volumeCompounding = new GlVolumeCompounding(container2); // own the container
-            volumeCompounding->setUseGPU(true);
-            volumeCompounding->setMode(GlVolumeCompounding::MEDIAN);
-            volumeCompounding->compute();
-            volumeCompounding->output(outputVolume);
+            // volumeCompounding = new GlVolumeCompounding(container2); // own the container
+            // volumeCompounding->setUseGPU(true);
+            // volumeCompounding->setMode(GlVolumeCompounding::MEDIAN);
+            // volumeCompounding->compute();
+            // volumeCompounding->output(outputVolume);
 
-            m_main->dataModel()->add(outputVolume.getItem(0), "Compounded Volume");
+            // m_main->dataModel()->add(outputVolume.getItem(0), "Compounded Volume");
 
-            if (m_exportSweeps) {
-                auto sis = static_cast<SharedImageSet *>(outputVolume.getItem(0));
-                sis->get()->sync();
-                auto str = getDayAndTime();
-                BackgroundExporter *sweepExporter = new BackgroundExporter();
-                sweepExporter->save(sis, "/data1/volume1/data/felix_data/robotic_sweeps/complete_vol_" + str + ".imf");
-            }
+            // if (m_exportSweeps) {
+            //     auto sis = static_cast<SharedImageSet *>(outputVolume.getItem(0));
+            //     sis->get()->sync();
+            //     auto str = getDayAndTime();
+            //     BackgroundExporter *sweepExporter = new BackgroundExporter();
+            //     sweepExporter->saveAsync(sis, "/data1/volume1/data/felix_data/robotic_sweeps/complete_vol_" + str + ".imf");
+            // }
         }
 
         std::string SweepRecAndComp::getDayAndTime() {

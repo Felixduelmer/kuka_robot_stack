@@ -8,22 +8,23 @@ include(cmake/Macros.cmake)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-list(APPEND CMAKE_PREFIX_PATH ${ROS_WORKSPACE_ROOT})
-list(APPEND CMAKE_PREFIX_PATH /home/robotics-verse/projects/felix/libtorch)
 
+find_package(catkin REQUIRED COMPONENTS
+roscpp
+std_msgs
+sensor_msgs
+iiwa_msgs
+iiwa_ros
+)
+
+
+list(APPEND CMAKE_PREFIX_PATH ${ROS_WORKSPACE_ROOT})
+list(APPEND CMAKE_PREFIX_PATH /home/felix/projects/libtorch)
+list(APPEND CMAKE_PREFIX_PATH /usr/local/cuda-12.3)
 find_package(ImFusionLib REQUIRED)
 find_package(Qt5 COMPONENTS Core Gui Widgets REQUIRED)
 
-find_package(catkin REQUIRED COMPONENTS
-        roscpp
-        std_msgs
-        sensor_msgs
-        iiwa_msgs
-        iiwa_ros
-        )
-find_package(OpenIGTLink REQUIRED)
-
-find_package(OpenCV 3 REQUIRED) # locate OpenCV in system #JZL
+find_package(OpenCV 4 REQUIRED) # locate OpenCV in system #JZL
 #include_directories(${OpenCV_INCLUDE_DIRS})
 message(STATUS "This is OpenCV INCLUDE DIRS" ${OpenCV_INCLUDE_DIRS})
 message(STATUS "This is OpenCV LIBS DIRS" ${OpenCV_LIBS})
@@ -43,7 +44,6 @@ catkin_package(
         sensor_msgs
         iiwa_msgs
         iiwa_ros
-        DEPENDS OpenIGTLink
         CFG_EXTRAS definitions.cmake
 )
 

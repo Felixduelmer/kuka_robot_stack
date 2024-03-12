@@ -2,11 +2,11 @@
 /************************************************************************
  *                           ImFusion
  * **********************************************************************/
-#include <ImFusion/Base/Algorithm.h>  // for IoAlgorithm
+// #include <ImFusion/Base/Algorithm.h>  // for IoAlgorithm
 #include <ImFusion/Base/DataList.h>   // for DataList
-#include <ImFusion/Base/AlgorithmListener.h>  // for AlgorithmListener
-#include <ImFusion/Base/Log.h>                // for LOG_INFO
-#include <ImFusion/Base/Properties.h>         // for Properties
+// #include <ImFusion/Base/AlgorithmListener.h>  // for AlgorithmListener
+#include <ImFusion/Core/Log.h>                // for LOG_INFO
+#include <ImFusion/Core/Properties.h>         // for Properties
 #include <ImFusion/Base/MemImage.h>
 #include <ImFusion/Base/SharedImage.h>
 #include <ImFusion/Base/SharedImageSet.h>
@@ -26,8 +26,8 @@
 #include <ImFusion/GUI/MainWindowBase.h>
 #include <ImFusion/GUI/AlgorithmController.h>
 #include <ImFusion/IO/BackgroundExporter.h>
-#include <ImFusion/Stream/OpenIGTLinkStreamData.h>
-#include <ImFusion/Stream/OpenIGTLinkImageStream.h>
+#include <ImFusion/Stream/StreamData.h>
+#include <ImFusion/Stream/IgtlImageStream.h>
 #include <ImFusion/Stream/LiveTrackingStream.h>
 #include <ImFusion/Stream/TrackingStreamData.h>
 #include <ImFusion/US/UltrasoundSweep.h>
@@ -35,7 +35,7 @@
 #include <ImFusion/US/FanMask.h>
 #include <ImFusion/US/UltrasoundGeometry.h>
 #include <ImFusion/US/GlSweepCompounding.h>
-#include <ImFusion/US/USSweepRecorderAlgorithm.h>
+#include <ImFusion/LiveUS/USSweepRecorderAlgorithm.h>
 #include <ImFusion/US/USSweepCalibrator.h>
 #include "vision_control/VisionAlgorithm.h"
 /************************************************************************
@@ -62,8 +62,6 @@
 /************************************************************************
  *                           Custom
  * **********************************************************************/
-#include "MonitorChangeThread.h"
-#include <vision_control/ConfidentMapConvex.h>
 
 //#include <ImFusion/IO/PngIO.h>
 #define TIM_INTERVAL_REC 25
@@ -238,7 +236,6 @@ signals:
 private:
   int m_breakPointIndex; // index of the point in the trajectory where the movement occured
 
-  MonitorChangeThread* m_monitorChangeThread;
   QMutex *m_mutex;
 
   Eigen::Matrix4f m_irTransform;
@@ -311,7 +308,7 @@ private:
 
   std::shared_ptr<Ui_Controller> ui_{nullptr};  ///< The actual GUI
   PluginAlgorithm* algorithm_{nullptr};
-  ConfidentMapConvex* m_confiMapConvex;
+  // ConfidentMapConvex* m_confiMapConvex;
   float m_pixel_height = 0.076f; // in mm
   float m_pixel_width = 0.26f; // in mm
 

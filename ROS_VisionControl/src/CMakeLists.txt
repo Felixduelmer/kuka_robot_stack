@@ -36,7 +36,7 @@ find_package(OpenIGTLink REQUIRED)
 #message(STATUS "This is OpenCV INCLUDE DIRS" ${PCL_INCLUDE_DIRS})
 
 #set(OpenCV_DIR "/usr/local/lib")
-find_package( OpenCV 3 REQUIRED) # locate OpenCV in system #JZL
+find_package( OpenCV 4 REQUIRED) # locate OpenCV in system #JZL
 #include_directories(${OpenCV_INCLUDE_DIRS})
 message(STATUS "This is OpenCV INCLUDE DIRS" ${OpenCV_INCLUDE_DIRS})
 message(STATUS "This is OpenCV LIBS DIRS" ${OpenCV_LIBS})
@@ -68,13 +68,13 @@ include("cmake/definitions.cmake")
 file(GLOB PLUGIN_HEADERS "include/*.h" "include/vision_control/*.h")
 
 set(PLUGIN_SOURCES
-  src/MonitorChangeThread.cpp
+  # src/MonitorChangeThread.cpp
   src/VisionPlugin.cpp
   src/VisionFactory.cpp
   src/VisionAlgorithm.cpp
   src/VisionController.cpp
-  src/VisionStreamOptimizer.cpp
-  src/ConfidentMapConvex.cpp
+  # src/VisionStreamOptimizer.cpp
+  # src/ConfidentMapConvex.cpp
   src/controller.ui
 )
 
